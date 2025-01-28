@@ -1,77 +1,135 @@
-import React, { useState } from "react";
+import React, { useState, createContext, useContext } from "react";
 import Home from "@/pages/Home";
 import AddDocuments from "@/pages/AddDocuments";
 import RagSettings from "@/pages/RagSettings";
 import History from "@/pages/History";
 import { Button } from "@/components/ui/button";
+import { ChevronLeft, Menu, Home as HomeIcon, Upload, Settings, History as HistoryIcon } from "lucide-react";
+
+// Création des contextes
+export const ChatContext = createContext();
+export const DocumentContext = createContext();
+export const RagContext = createContext();
 
 const App = () => {
     const [view, setView] = useState("home");
-    const [query, setQuery] = useState("");
-    const [response, setResponse] = useState("");
-    const [submitted, setSubmitted] = useState(false);
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-    const handleQuerySubmit = async () => {
-        try {
-            const res = await fetch("https://api.example.com/endpoint", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ query }),
-            });
-            console.log("Demande envoyée: " + JSON.stringify({ query }));
-            setSubmitted(true);
-            const data = await res.json();
-            setResponse(data.answer || "Aucune réponse trouvée");
-        } catch (error) {
-            setResponse("Erreur lors de la communication avec l'API.");
+    // État global pour les chats
+    const [chats, setChats] = useState([
+        {
+            id: 1,
+            messages: [
+                { type: 'user', message: "Bonjour, j'ai une question." },
+                { type: 'assistant', message: "Je vous écoute, comment puis-je vous aider ?" }
+            ]
         }
-    };
+    ]);
+    const [activeChat, setActiveChat] = useState(1);
+
+    // État global pour les documents
+    const [documents, setDocuments] = useState([]);
+
+    // État global pour les paramètres RAG
+    const [ragParameters, setRagParameters] = useState({
+        vitesse: 40,
+        files: 12,
+        kValue: 2
+    });
+
+    const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+    const closeMenu = () => setIsMenuOpen(false);
+
+    const menuItems = [
+        { id: "home", label: "Accueil", icon: HomeIcon },
+        { id: "add-documents", label: "Ajouter des documents", icon: Upload },
+        { id: "rag-settings", label: "Paramètres du RAG", icon: Settings },
+        { id: "history", label: "Historique", icon: HistoryIcon },
+    ];
 
     const renderView = () => {
         switch (view) {
             case "add-documents":
                 return <AddDocuments />;
             case "rag-settings":
-                return <RagSettings enter={true}/>;
+                return <RagSettings />;
             case "history":
                 return <History />;
             default:
-                return (
-                    <Home
-                        query={query}
-                        setQuery={setQuery}
-                        handleQuerySubmit={handleQuerySubmit}
-                        response={response}
-                        submitted={submitted}
-                    />
-                );
+                return <Home />;
         }
     };
 
     return (
-        <div className="flex h-screen">
-            {/* Sidebar */}
-            <div className="w-1/4 bg-gray-800 text-white p-4 flex flex-col space-y-4">
-                <h2 className="text-xl font-bold mb-4">Menu</h2>
-                <Button variant="ghost" className="text-left" onClick={() => setView("home")}>
-                    Accueil
-                </Button>
-                <Button variant="ghost" className="text-left" onClick={() => setView("add-documents")}>
-                    Ajouter des documents
-                </Button>
-                <Button variant="ghost" className="text-left" onClick={() => setView("rag-settings")}>
-                    Paramètres du RAG
-                </Button>
-                <Button variant="ghost" className="text-left" onClick={() => setView("history")}>
-                    Historique
-                </Button>
-            </div>
+        <ChatContext.Provider value={{ chats, setChats, activeChat, setActiveChat }}>
+            <DocumentContext.Provider value={{ documents, setDocuments }}>
+                <RagContext.Provider value={{ ragParameters, setRagParameters }}>
+                    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className={`
+                                fixed top-4 left-4 z-50
+                                transition-transform duration-200
+                                ${isMenuOpen ? 'translate-x-48' : 'translate-x-0'}
+                            `}
+                            onClick={toggleMenu}
+                        >
+                            {isMenuOpen ? (
+                                <ChevronLeft className="h-5 w-5" />
+                            ) : (
+                                <Menu className="h-5 w-5" />
+                            )}
+                        </Button>
 
-            {/* Main Content */}
-            <div className="flex-1 flex flex-col p-6">{renderView()}</div>
-        </div>
+                        <div
+                            className={`
+                                fixed inset-y-0 left-0
+                                w-56
+                                bg-gray-900 
+                                text-white 
+                                p-4 
+                                pt-16
+                                flex flex-col 
+                                transform transition-transform duration-200 ease-in-out
+                                z-40
+                                ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+                            `}
+                        >
+                            <nav className="space-y-2 flex-1">
+                                {menuItems.map((item) => (
+                                    <Button
+                                        key={item.id}
+                                        variant={view === item.id ? "secondary" : "ghost"}
+                                        className="w-full justify-start"
+                                        onClick={() => {
+                                            setView(item.id);
+                                            closeMenu();
+                                        }}
+                                    >
+                                        <item.icon className="mr-2 h-5 w-5" />
+                                        {item.label}
+                                    </Button>
+                                ))}
+                            </nav>
+                        </div>
+
+                        {isMenuOpen && (
+                            <div
+                                className="fixed inset-0 bg-black/20 z-30"
+                                onClick={closeMenu}
+                            />
+                        )}
+
+                        <div className="flex-1 overflow-hidden">
+                            <main className="h-full p-4 pt-16">
+                                {renderView()}
+                            </main>
+                        </div>
+                    </div>
+                </RagContext.Provider>
+            </DocumentContext.Provider>
+        </ChatContext.Provider>
     );
 };
 

@@ -1,31 +1,160 @@
-import React from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import React, { useState } from "react";
+import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Send, Plus, Bot, User } from "lucide-react";
 
-const Home = ({ query, setQuery, handleQuerySubmit, response, submitted }) => {
+const ChatMessage = ({ message, type }) => (
+    <div className={`flex gap-4 ${type === 'user' ? 'justify-end' : 'justify-start'} mb-4`}>
+        <div className={`
+            flex items-start gap-3 max-w-[80%]
+            ${type === 'user' ? 'flex-row-reverse' : 'flex-row'}
+        `}>
+            <div className={`
+                flex-shrink-0 w-8 h-8 rounded-full 
+                flex items-center justify-center
+                ${type === 'user' ? 'bg-indigo-600' : 'bg-gray-600'}
+            `}>
+                {type === 'user' ? (
+                    <User className="w-5 h-5 text-white" />
+                ) : (
+                    <Bot className="w-5 h-5 text-white" />
+                )}
+            </div>
+            <div className={`
+                rounded-lg p-4
+                ${type === 'user'
+                ? 'bg-indigo-600 text-white'
+                : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'}
+            `}>
+                {message}
+            </div>
+        </div>
+    </div>
+);
+
+const ChatContainer = ({ messages }) => (
+    <div className="flex-1 overflow-auto p-4">
+        {messages.map((msg, idx) => (
+            <ChatMessage key={idx} {...msg} />
+        ))}
+    </div>
+);
+
+const Home = () => {
+    const [chats, setChats] = useState([
+        {
+            id: 1,
+            messages: [
+                { type: 'user', message: "Bonjour, j'ai une question." },
+                { type: 'assistant', message: "Je vous écoute, comment puis-je vous aider ?" }
+            ]
+        }
+    ]);
+    const [activeChat, setActiveChat] = useState(1);
+    const [newMessage, setNewMessage] = useState("");
+
+    const handleSend = async () => {
+        if (!newMessage.trim()) return;
+
+        // Ajouter le message de l'utilisateur
+        const updatedChats = chats.map(chat => {
+            if (chat.id === activeChat) {
+                return {
+                    ...chat,
+                    messages: [...chat.messages, { type: 'user', message: newMessage.trim() }]
+                };
+            }
+            return chat;
+        });
+        setChats(updatedChats);
+        setNewMessage("");
+
+        // Simuler une réponse de l'assistant
+        setTimeout(() => {
+            const updatedChatsWithResponse = chats.map(chat => {
+                if (chat.id === activeChat) {
+                    return {
+                        ...chat,
+                        messages: [...chat.messages,
+                            { type: 'user', message: newMessage.trim() },
+                            { type: 'assistant', message: "Je traite votre demande..." }
+                        ]
+                    };
+                }
+                return chat;
+            });
+            setChats(updatedChatsWithResponse);
+        }, 1000);
+    };
+
+    const createNewChat = () => {
+        const newChat = {
+            id: chats.length + 1,
+            messages: []
+        };
+        setChats([...chats, newChat]);
+        setActiveChat(newChat.id);
+    };
+
     return (
-        <>
-            <Card className="mb-4">
-                <CardContent>
-                    <Textarea
-                        placeholder="Posez une question..."
-                        value={query}
-                        onChange={(e) => setQuery(e.target.value)}
-                        className="mb-4"
+        <div className="flex h-full gap-4">
+            {/* Chat list */}
+            <div className="w-64 shrink-0 hidden lg:flex flex-col gap-4">
+                <Button
+                    onClick={createNewChat}
+                    className="w-full"
+                >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Nouvelle conversation
+                </Button>
+                <div className="flex-1 overflow-auto space-y-2">
+                    {chats.map((chat) => (
+                        <Button
+                            key={chat.id}
+                            variant={activeChat === chat.id ? "secondary" : "ghost"}
+                            className="w-full justify-start"
+                            onClick={() => setActiveChat(chat.id)}
+                        >
+                            Chat #{chat.id}
+                        </Button>
+                    ))}
+                </div>
+            </div>
+
+            {/* Main chat area */}
+            <Card className="flex-1 flex flex-col">
+                <div className="flex-1 overflow-hidden flex flex-col">
+                    <ChatContainer
+                        messages={chats.find(c => c.id === activeChat)?.messages || []}
                     />
-                    <Button onClick={handleQuerySubmit}>Envoyer</Button>
-                </CardContent>
+                    <div className="p-4 border-t dark:border-gray-800">
+                        <div className="relative">
+                            <Textarea
+                                value={newMessage}
+                                onChange={(e) => setNewMessage(e.target.value)}
+                                placeholder="Écrivez votre message..."
+                                className="pr-12 resize-none"
+                                rows={3}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                        e.preventDefault();
+                                        handleSend();
+                                    }
+                                }}
+                            />
+                            <Button
+                                onClick={handleSend}
+                                className="absolute bottom-2 right-2"
+                                disabled={!newMessage.trim()}
+                            >
+                                <Send className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    </div>
+                </div>
             </Card>
-            {submitted && (
-                <Card className="flex-1">
-                    <CardContent>
-                        <h3 className="text-xl font-bold mb-2">Réponse :</h3>
-                        <p>{response}</p>
-                    </CardContent>
-                </Card>
-            )}
-        </>
+        </div>
     );
 };
 
