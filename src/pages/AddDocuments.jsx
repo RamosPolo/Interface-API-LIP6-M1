@@ -6,6 +6,7 @@ import { Upload } from "lucide-react";
 const AddDocuments = () => {
     const [isDragging, setIsDragging] = useState(false);
     const [fileName, setFileName] = useState("");
+    const [selectedFile, setSelectedFile] = useState(null);
 
     const handleDragOver = (e) => {
         e.preventDefault();
@@ -23,6 +24,8 @@ const AddDocuments = () => {
         const files = Array.from(e.dataTransfer.files);
         if (files.length > 0) {
             setFileName(files[0].name);
+            setSelectedFile(files[0]);
+            console.log("Fichier déposé:", files[0]);
         }
     };
 
@@ -30,6 +33,32 @@ const AddDocuments = () => {
         const files = Array.from(e.target.files);
         if (files.length > 0) {
             setFileName(files[0].name);
+            setSelectedFile(files[0]);
+            console.log("Fichier sélectionné:", files[0]);
+        }
+    };
+
+    const handleUpload = async () => {
+        if (!selectedFile) return;
+
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+
+        try {
+            const response = await fetch('http://127.0.0.1:5000/add_document', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                alert("Document ajouté avec succès");
+            } else {
+                alert(`Erreur: ${data.error}`);
+            }
+        } catch (error) {
+            console.error("Erreur lors de l'envoi du fichier:", error);
+            alert("Erreur lors de l'envoi du fichier");
         }
     };
 
@@ -70,7 +99,7 @@ const AddDocuments = () => {
                     )}
                     <input
                         type="file"
-                        accept=".zip"
+                        accept=".zip .pdf"
                         className="hidden"
                         id="file-upload"
                         onChange={handleFileChange}
@@ -81,6 +110,13 @@ const AddDocuments = () => {
                         </Button>
                     </label>
                 </div>
+                <Button
+                    onClick={handleUpload}
+                    className="w-full mt-4"
+                    disabled={!selectedFile}
+                >
+                    Envoyer le fichier
+                </Button>
             </CardContent>
         </Card>
     );
