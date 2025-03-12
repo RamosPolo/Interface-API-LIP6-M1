@@ -86,7 +86,7 @@ const Home = () => {
             const data = await response.json();
 
             // Ajouter la réponse de l'assistant
-            const updatedChatsWithResponse = chats.map(chat => {
+            const updatedChatsWithResponse = updatedChats.map(chat => {
                 if (chat.id === activeChat) {
                     return {
                         ...chat,
