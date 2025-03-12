@@ -1,10 +1,11 @@
-import React, { useState, createContext, useContext } from "react";
+import React, { useState, createContext } from "react";
 import Home from "@/pages/Home";
 import AddDocuments from "@/pages/AddDocuments";
 import RagSettings from "@/pages/RagSettings";
 import History from "@/pages/History";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, Menu, Home as HomeIcon, Upload, Settings, History as HistoryIcon } from "lucide-react";
+import LoginModal from "@/components/ui/LoginModal";
 
 // Création des contextes
 export const ChatContext = createContext();
@@ -14,6 +15,9 @@ export const RagContext = createContext();
 const App = () => {
     const [view, setView] = useState("home");
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [isAdmin, setIsAdmin] = useState(false);
+    const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
     // État global pour les chats
     const [chats, setChats] = useState([
@@ -40,6 +44,22 @@ const App = () => {
     const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
     const closeMenu = () => setIsMenuOpen(false);
 
+    const handleLogin = (username, password) => {
+        if (username === 'admin' && password === 'admin') {
+            setIsLoggedIn(true);
+            setIsAdmin(true);
+        } else {
+            setIsLoggedIn(true);
+            setIsAdmin(false);
+        }
+        setIsLoginModalOpen(false);
+    };
+
+    const handleLogout = () => {
+        setIsLoggedIn(false);
+        setIsAdmin(false);
+    };
+
     const menuItems = [
         { id: "home", label: "Accueil", icon: HomeIcon },
         { id: "add-documents", label: "Ajouter des documents", icon: Upload },
@@ -50,9 +70,9 @@ const App = () => {
     const renderView = () => {
         switch (view) {
             case "add-documents":
-                return <AddDocuments />;
+                return isAdmin ? <AddDocuments /> : <div>Accès refusé</div>;
             case "rag-settings":
-                return <RagSettings />;
+                return isAdmin ? <RagSettings /> : <div>Accès refusé</div>;
             case "history":
                 return <History />;
             default:
@@ -86,11 +106,11 @@ const App = () => {
                             className={`
                                 fixed inset-y-0 left-0
                                 w-56
-                                bg-gray-900 
-                                text-white 
-                                p-4 
+                                bg-gray-900
+                                text-white
+                                p-4
                                 pt-16
-                                flex flex-col 
+                                flex flex-col
                                 transform transition-transform duration-200 ease-in-out
                                 z-40
                                 ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'}
@@ -122,10 +142,31 @@ const App = () => {
                         )}
 
                         <div className="flex-1 overflow-hidden">
-                            <main className="h-full p-4 pt-16">
+                            <main className="h-full p-4 pt-16 relative">
+                                {!isLoggedIn && (
+                                    <Button
+                                        onClick={() => setIsLoginModalOpen(true)}
+                                        className="absolute top-4 right-4"
+                                    >
+                                        Login
+                                    </Button>
+                                )}
+                                {isLoggedIn && (
+                                    <Button
+                                        onClick={handleLogout}
+                                        className="absolute top-4 right-4"
+                                    >
+                                        Logout
+                                    </Button>
+                                )}
                                 {renderView()}
                             </main>
                         </div>
+                        <LoginModal
+                            isOpen={isLoginModalOpen}
+                            onClose={() => setIsLoginModalOpen(false)}
+                            onLogin={handleLogin}
+                        />
                     </div>
                 </RagContext.Provider>
             </DocumentContext.Provider>
