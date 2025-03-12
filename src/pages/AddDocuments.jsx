@@ -10,6 +10,7 @@ const AddDocuments = () => {
     const [isDragging, setIsDragging] = useState(false);
     const [fileName, setFileName] = useState("");
     const [selectedFile, setSelectedFile] = useState(null);
+    const fileInputRef = React.useRef(null);
 
     const handlePostRequest = async () => {
         if (!inputValue.trim()) return;
@@ -142,16 +143,17 @@ const AddDocuments = () => {
                         )}
                         <input
                             type="file"
-                            accept=".zip"
+                            accept=".pdf,.zip"
                             className="hidden"
                             id="file-upload"
+                            ref={fileInputRef}
                             onChange={handleFileChange}
                         />
-                        <label htmlFor="file-upload">
-                            <Button variant="secondary">
+                        
+                            <Button variant="secondary" onClick={() => fileInputRef.current.click()}>
                                 Sélectionner un fichier
                             </Button>
-                        </label>
+                        
                     </div>
                     <Button
                       onClick={handleUpload}
