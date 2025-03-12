@@ -9,6 +9,7 @@ const AddDocuments = () => {
     const [responseMessage, setResponseMessage] = useState("");
     const [isDragging, setIsDragging] = useState(false);
     const [fileName, setFileName] = useState("");
+    const [selectedFile, setSelectedFile] = useState(null);
 
     const handlePostRequest = async () => {
         if (!inputValue.trim()) return;
@@ -45,6 +46,8 @@ const AddDocuments = () => {
         const files = Array.from(e.dataTransfer.files);
         if (files.length > 0) {
             setFileName(files[0].name);
+            setSelectedFile(files[0]);
+            console.log("Fichier déposé:", files[0]);
         }
     };
 
@@ -52,10 +55,37 @@ const AddDocuments = () => {
         const files = Array.from(e.target.files);
         if (files.length > 0) {
             setFileName(files[0].name);
+            setSelectedFile(files[0]);
+            console.log("Fichier sélectionné:", files[0]);
+        }
+    };
+
+    const handleUpload = async () => {
+        if (!selectedFile) return;
+
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+
+        try {
+            const response = await fetch('http://127.0.0.1:5000/add_document', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                alert("Document ajouté avec succès");
+            } else {
+                alert(`Erreur: ${data.error}`);
+            }
+        } catch (error) {
+            console.error("Erreur lors de l'envoi du fichier:", error);
+            alert("Erreur lors de l'envoi du fichier");
         }
     };
 
     return (
+
         <div className="flex flex-col items-center space-y-6 p-6">
             <Card className="w-full max-w-2xl p-6">
                 <CardHeader>
@@ -123,9 +153,17 @@ const AddDocuments = () => {
                             </Button>
                         </label>
                     </div>
+                    <Button
+                      onClick={handleUpload}
+                      className="w-full mt-4"
+                      disabled={!selectedFile}
+                    >
+                    Envoyer le fichier
+                  </Button>
                 </CardContent>
             </Card>
         </div>
+
     );
 };
 
