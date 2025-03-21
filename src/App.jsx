@@ -5,15 +5,30 @@ import RagSettings from "@/pages/RagSettings";
 import History from "@/pages/History";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, Menu, Home as HomeIcon, Upload, Settings, History as HistoryIcon } from "lucide-react";
+import Login from "@/pages/Login.jsx";
+import {AuthProvider, useAuth} from "@/context/AuthContext.jsx";
 
 // Création des contextes
 export const ChatContext = createContext();
 export const DocumentContext = createContext();
 export const RagContext = createContext();
 
-const App = () => {
+const AppContent = () => {
+    const { isAuthenticated } = useAuth();
+    return isAuthenticated ? (
+        // Affiche ton application normale
+        <MainApp />
+    ) : (
+        <Login />
+    );
+};
+
+const MainApp = () => {
     const [view, setView] = useState("home");
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+    // pour se logout
+    const { logout } = useAuth();
 
     // État global pour les chats
     const [chats, setChats] = useState([
@@ -112,6 +127,13 @@ const App = () => {
                                     </Button>
                                 ))}
                             </nav>
+                            <Button
+                                variant="destructive"
+                                className="w-full mt-4"
+                                onClick={logout}
+                            >
+                                Se déconnecter
+                            </Button>
                         </div>
 
                         {isMenuOpen && (
@@ -130,6 +152,14 @@ const App = () => {
                 </RagContext.Provider>
             </DocumentContext.Provider>
         </ChatContext.Provider>
+    );
+};
+
+const App = () => {
+    return (
+        <AuthProvider>
+            <AppContent />
+        </AuthProvider>
     );
 };
 
