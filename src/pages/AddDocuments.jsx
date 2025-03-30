@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Upload } from "lucide-react";
+import { useAuth } from "@/context/AuthContext.jsx";
 
 const AddDocuments = () => {
     const [inputValue, setInputValue] = useState("");
@@ -11,13 +12,20 @@ const AddDocuments = () => {
     const [fileName, setFileName] = useState("");
     const [selectedFile, setSelectedFile] = useState(null);
     const fileInputRef = React.useRef(null);
+    const { user } = useAuth();
 
     const handlePostRequest = async () => {
         if (!inputValue.trim()) return;
 
         try {
-            const response = await fetch(`http://127.0.0.1:5000/collection/${encodeURIComponent(inputValue)}`, {
-                method: "POST",
+            const collection_name = encodeURIComponent(inputValue);
+
+            const response = await fetch(`http://127.0.0.1:5000/collection`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ collection_name })
             });
 
             if (!response.ok) {
@@ -66,8 +74,10 @@ const AddDocuments = () => {
 
         const formData = new FormData();
         formData.append('file', selectedFile);
+        formData.append('user_id', user.id);
 
         try {
+
             const response = await fetch('http://127.0.0.1:5000/add_document', {
                 method: 'POST',
                 body: formData

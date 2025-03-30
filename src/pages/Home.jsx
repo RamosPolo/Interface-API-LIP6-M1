@@ -3,8 +3,8 @@ import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Send, Plus, Bot, User } from "lucide-react";
+import { useAuth } from "@/context/AuthContext.jsx";
 
-// Composant pour afficher un message de chat
 const ChatMessage = ({ message, type }) => (
     <div className={`flex gap-4 ${type === 'user' ? 'justify-end' : 'justify-start'} mb-4`}>
         <div className={`
@@ -34,7 +34,6 @@ const ChatMessage = ({ message, type }) => (
     </div>
 );
 
-// Composant pour afficher la liste des messages de chat
 const ChatContainer = ({ messages }) => (
     <div className="flex-1 overflow-auto p-4">
         {messages.map((msg, idx) => (
@@ -43,9 +42,7 @@ const ChatContainer = ({ messages }) => (
     </div>
 );
 
-// Composant principal de la page Home
 const Home = () => {
-    // État pour gérer les chats
     const [chats, setChats] = useState([
         {
             id: 1,
@@ -57,12 +54,11 @@ const Home = () => {
     ]);
     const [activeChat, setActiveChat] = useState(1);
     const [newMessage, setNewMessage] = useState("");
+    const { user } = useAuth();
 
-    // Fonction pour envoyer un message
     const handleSend = async () => {
         if (!newMessage.trim()) return;
 
-        // Ajouter le message de l'utilisateur
         const updatedChats = chats.map(chat => {
             if (chat.id === activeChat) {
                 return {
@@ -75,17 +71,22 @@ const Home = () => {
         setChats(updatedChats);
         setNewMessage("");
 
-        // Envoyer la requête à l'API
         try {
-            const response = await fetch(`http://127.0.0.1:5000/query/${encodeURIComponent(newMessage.trim())}`, {
-                method: 'GET',
+            const query_text = encodeURIComponent(newMessage.trim());
+            const user_id = user.id;
+
+            console.log("User:", { user });
+
+            const response = await fetch(`http://127.0.0.1:5000/query`, {
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
-                }
+                },
+                body: JSON.stringify({ query_text, user_id })
             });
+
             const data = await response.json();
 
-            // Ajouter la réponse de l'assistant
             const updatedChatsWithResponse = updatedChats.map(chat => {
                 if (chat.id === activeChat) {
                     return {
@@ -103,7 +104,6 @@ const Home = () => {
         }
     };
 
-    // Fonction pour créer une nouvelle conversation
     const createNewChat = () => {
         const newChat = {
             id: chats.length + 1,
@@ -115,7 +115,6 @@ const Home = () => {
 
     return (
         <div className="flex h-full gap-4">
-            {/* Liste des chats */}
             <div className="w-64 shrink-0 hidden lg:flex flex-col gap-4">
                 <Button
                     onClick={createNewChat}
@@ -138,7 +137,6 @@ const Home = () => {
                 </div>
             </div>
 
-            {/* Zone principale de chat */}
             <Card className="flex-1 flex flex-col">
                 <div className="flex-1 overflow-hidden flex flex-col">
                     <ChatContainer

@@ -5,17 +5,28 @@ import RagSettings from "@/pages/RagSettings";
 import History from "@/pages/History";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, Menu, Home as HomeIcon, Upload, Settings, History as HistoryIcon } from "lucide-react";
+import Login from "@/pages/Login.jsx";
+import { AuthProvider, useAuth } from "@/context/AuthContext.jsx";
 
-// Création des contextes
 export const ChatContext = createContext();
 export const DocumentContext = createContext();
 export const RagContext = createContext();
 
-const App = () => {
+const AppContent = () => {
+    const { isAuthenticated } = useAuth();
+
+    return isAuthenticated ? (
+        <MainApp />
+    ) : (
+        <Login />
+    );
+};
+
+const MainApp = () => {
     const [view, setView] = useState("home");
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const { logout } = useAuth();
 
-    // État global pour les chats
     const [chats, setChats] = useState([
         {
             id: 1,
@@ -27,10 +38,8 @@ const App = () => {
     ]);
     const [activeChat, setActiveChat] = useState(1);
 
-    // État global pour les documents
     const [documents, setDocuments] = useState([]);
 
-    // État global pour les paramètres RAG
     const [ragParameters, setRagParameters] = useState({
         vitesse: 40,
         files: 12,
@@ -112,6 +121,13 @@ const App = () => {
                                     </Button>
                                 ))}
                             </nav>
+                            <Button
+                                variant="destructive"
+                                className="w-full mt-4"
+                                onClick={logout}
+                            >
+                                Se déconnecter
+                            </Button>
                         </div>
 
                         {isMenuOpen && (
@@ -130,6 +146,14 @@ const App = () => {
                 </RagContext.Provider>
             </DocumentContext.Provider>
         </ChatContext.Provider>
+    );
+};
+
+const App = () => {
+    return (
+        <AuthProvider>
+            <AppContent />
+        </AuthProvider>
     );
 };
 
