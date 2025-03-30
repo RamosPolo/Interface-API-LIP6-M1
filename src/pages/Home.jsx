@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Send, Plus, Bot, User } from "lucide-react";
 import { useAuth } from "@/context/AuthContext.jsx";
 
-const ChatMessage = ({ message, type }) => (
-    <div className={`flex gap-4 ${type === 'user' ? 'justify-end' : 'justify-start'} mb-4`}>
+const ChatMessage = ({ message, type, onClick }) => (
+    <div
+        className={`flex gap-4 ${type === 'user' ? 'justify-end' : 'justify-start'} mb-4`}
+    >
         <div className={`
             flex items-start gap-3 max-w-[80%]
             ${type === 'user' ? 'flex-row-reverse' : 'flex-row'}
@@ -22,22 +24,26 @@ const ChatMessage = ({ message, type }) => (
                     <Bot className="w-5 h-5 text-white" />
                 )}
             </div>
-            <div className={`
-                rounded-lg p-4
-                ${type === 'user'
-                ? 'bg-indigo-600 text-white'
-                : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'}
-            `}>
+            <div 
+                className={`
+                    relative rounded-lg p-4 transition-all
+                    ${type === 'user'
+                    ? 'bg-indigo-600 text-white hover:bg-indigo-700 hover:scale-105 cursor-pointer'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'}
+                `}
+                onClick={() => type === 'user' && onClick(message)}
+            >
                 {message}
             </div>
+
         </div>
     </div>
 );
 
-const ChatContainer = ({ messages }) => (
+const ChatContainer = ({ messages, onMessageClick }) => (
     <div className="flex-1 overflow-auto p-4">
         {messages.map((msg, idx) => (
-            <ChatMessage key={idx} {...msg} />
+            <ChatMessage key={idx} {...msg} onClick={onMessageClick} />
         ))}
     </div>
 );
@@ -47,7 +53,6 @@ const Home = () => {
         {
             id: 1,
             messages: [
-                { type: 'user', message: "Bonjour, j'ai une question." },
                 { type: 'assistant', message: "Je vous écoute, comment puis-je vous aider ?" }
             ]
         }
@@ -113,6 +118,10 @@ const Home = () => {
         setActiveChat(newChat.id);
     };
 
+    const handleMessageClick = (message) => {
+        setNewMessage(message);
+    };
+
     return (
         <div className="flex h-full gap-4">
             <div className="w-64 shrink-0 hidden lg:flex flex-col gap-4">
@@ -141,6 +150,7 @@ const Home = () => {
                 <div className="flex-1 overflow-hidden flex flex-col">
                     <ChatContainer
                         messages={chats.find(c => c.id === activeChat)?.messages || []}
+                        onMessageClick={handleMessageClick}
                     />
                     <div className="p-4 border-t dark:border-gray-800">
                         <div className="relative">
