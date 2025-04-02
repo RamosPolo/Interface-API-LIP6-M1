@@ -25,7 +25,7 @@ const AppContent = () => {
 const MainApp = () => {
     const [view, setView] = useState("home");
     const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const { logout } = useAuth();
+    const { user, logout } = useAuth();
 
     const [chats, setChats] = useState([
         {
@@ -36,25 +36,31 @@ const MainApp = () => {
             ]
         }
     ]);
+    
     const [activeChat, setActiveChat] = useState(1);
-
     const [documents, setDocuments] = useState([]);
-
-    const [ragParameters, setRagParameters] = useState({
-        vitesse: 40,
-        files: 12,
-        kValue: 2
-    });
+    const [ragParameters, setRagParameters] = useState({});
 
     const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
     const closeMenu = () => setIsMenuOpen(false);
 
-    const menuItems = [
-        { id: "home", label: "Accueil", icon: HomeIcon },
-        { id: "add-documents", label: "Ajouter des documents", icon: Upload },
-        { id: "rag-settings", label: "Paramètres du RAG", icon: Settings },
-        { id: "history", label: "Historique", icon: HistoryIcon },
-    ];
+    
+    const menuItems = [];
+
+    if(user.role == "user"){
+        menuItems.push(
+            { id: "home", label: "Accueil", icon: HomeIcon },
+            { id: "rag-settings", label: "Paramètres du RAG", icon: Settings },
+            { id: "history", label: "Historique", icon: HistoryIcon },
+        )
+    } else {
+        menuItems.push(
+            { id: "home", label: "Accueil", icon: HomeIcon },
+            { id: "add-documents", label: "Ajouter des documents", icon: Upload },
+            { id: "rag-settings", label: "Paramètres du RAG", icon: Settings },
+            { id: "history", label: "Historique", icon: HistoryIcon },
+        );
+    }
 
     const renderView = () => {
         switch (view) {
