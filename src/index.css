@@ -20,6 +20,13 @@
   }
 }
 
+html, body {
+  height: auto;
+  min-height: 100vh;
+  overflow-y: auto;
+}
+
+
 body {
   margin: 0;
   padding: 0;

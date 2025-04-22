@@ -79,7 +79,7 @@ const MainApp = () => {
         <ChatContext.Provider value={{ chats, setChats, activeChat, setActiveChat }}>
             <DocumentContext.Provider value={{ documents, setDocuments }}>
                 <RagContext.Provider value={{ ragParameters, setRagParameters }}>
-                    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
+                    <div className="flex h-full bg-gray-50 dark:bg-gray-900">
                         <Button
                             variant="ghost"
                             size="icon"
@@ -143,11 +143,9 @@ const MainApp = () => {
                             />
                         )}
 
-                        <div className="flex-1 overflow-hidden">
-                            <main className="h-full p-4 pt-16">
-                                {renderView()}
-                            </main>
-                        </div>
+                        <main className="min-h-screen w-full p-4 pt-16">
+                            {renderView()}
+                        </main>
                     </div>
                 </RagContext.Provider>
             </DocumentContext.Provider>

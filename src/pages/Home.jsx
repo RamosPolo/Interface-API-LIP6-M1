@@ -1,9 +1,10 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Send, Plus, Bot, User } from "lucide-react";
 import { useAuth } from "@/context/AuthContext.jsx";
+import { Select } from "@/components/ui/select";
 
 const ChatMessage = ({ message, type, onClick }) => (
     <div
@@ -59,10 +60,33 @@ const Home = () => {
     ]);
     const [activeChat, setActiveChat] = useState(1);
     const [newMessage, setNewMessage] = useState("");
+    const [collections, setCollections] = useState([]);
+    const [selectedCollection, setSelectedCollection] = useState("");
     const { user } = useAuth();
 
+    // Récupération des collections
+    useEffect(() => {
+        const fetchCollections = async () => {
+            try {
+                const response = await fetch("http://127.0.0.1:5000/collection/get");
+                const data = await response.json();
+                if (data.collections) {
+                    setCollections(data.collections);
+                    if (data.collections.length > 0) {
+                        setSelectedCollection(data.collections[0].name); // Sélectionner la première collection par défaut
+                    }
+                }
+            } catch (error) {
+                console.error("Erreur lors de la récupération des collections:", error);
+            }
+        };
+
+        fetchCollections();
+    }, []);
+
+    // Envoi du message avec la collection sélectionnée
     const handleSend = async () => {
-        if (!newMessage.trim()) return;
+        if (!newMessage.trim() || !selectedCollection) return;
 
         const updatedChats = chats.map(chat => {
             if (chat.id === activeChat) {
@@ -79,6 +103,7 @@ const Home = () => {
         try {
             const query_text = encodeURIComponent(newMessage.trim());
             const user_id = user.id;
+            const collection = selectedCollection; // Passer la collection sélectionnée
 
             console.log("User:", { user });
 
@@ -87,7 +112,7 @@ const Home = () => {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ query_text, user_id })
+                body: JSON.stringify({ query_text, user_id, collection })
             });
 
             const data = await response.json();
@@ -109,6 +134,7 @@ const Home = () => {
         }
     };
 
+    // Création d'une nouvelle conversation
     const createNewChat = () => {
         const newChat = {
             id: chats.length + 1,
@@ -118,6 +144,7 @@ const Home = () => {
         setActiveChat(newChat.id);
     };
 
+    // Gérer le clic sur un message pour le réutiliser
     const handleMessageClick = (message) => {
         setNewMessage(message);
     };
@@ -143,6 +170,19 @@ const Home = () => {
                             Chat #{chat.id}
                         </Button>
                     ))}
+                </div>
+                <div className="flex flex-col w-full gap-2">
+                    <label htmlFor="collectionSelect" className="text-sm text-white">
+                        Sélectionnez une collection
+                    </label>
+                    <Select
+                        value={selectedCollection}
+                        onChange={setSelectedCollection}
+                        options={collections.map((collection) => ({
+                            value: collection,
+                            label: collection
+                        }))}
+                    />
                 </div>
             </div>
 
@@ -170,7 +210,7 @@ const Home = () => {
                             <Button
                                 onClick={handleSend}
                                 className="absolute bottom-2 right-2"
-                                disabled={!newMessage.trim()}
+                                disabled={!newMessage.trim() || !selectedCollection}
                             >
                                 <Send className="h-4 w-4" />
                             </Button>
