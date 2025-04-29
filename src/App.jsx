@@ -127,6 +127,7 @@ const MainApp = () => {
                                     </Button>
                                 ))}
                             </nav>
+                            <p className="text-center">{user.email} - {user.role}</p>
                             <Button
                                 variant="destructive"
                                 className="w-full mt-4"
