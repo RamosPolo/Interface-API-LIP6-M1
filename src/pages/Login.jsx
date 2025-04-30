@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useAuth } from "@/context/AuthContext.jsx";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,12 +11,6 @@ const Login = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [shake, setShake] = useState(false);
     const { login, error } = useAuth();
-
-    // Décommenter cette ligne pour activer la connexion automatique avec admin/admin
-    // useEffect(() => {
-    //     setEmail("admin");
-    //     setPassword("admin");
-    // }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -152,7 +146,14 @@ const Login = () => {
                         </Button>
                     </form>
 
-                    <div className="mt-10 text-center">
+                    <div className="mt-8 border-t border-gray-200 dark:border-gray-700 pt-6">
+                        <div className="text-center text-gray-600 dark:text-gray-400 mb-4">
+                            <p className="text-sm">Pour les tests, vous pouvez utiliser :</p>
+                            <p className="text-sm font-medium">Identifiant : admin | Mot de passe : admin</p>
+                        </div>
+                    </div>
+
+                    <div className="mt-4 text-center">
                         <p className="text-xs text-gray-500 dark:text-gray-400">
                             © 2025 RAG Assistant. Tous droits réservés.
                         </p>

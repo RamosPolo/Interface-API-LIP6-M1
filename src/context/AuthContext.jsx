@@ -1,129 +1,148 @@
-import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
+import { createContext, useState, useContext, useEffect } from "react";
 
-// 1. Créer le contexte
-const AuthContext = createContext(null);
+const AuthContext = createContext();
 
-// Valeurs spéciales pour le bypass (doivent correspondre à Login.jsx)
-const DEV_BYPASS_USER = "dev_bypass_user";
-const DEV_BYPASS_PASSWORD = "dev_bypass_password";
-
-// 2. Créer le fournisseur (Provider)
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null); // Informations sur l'utilisateur connecté
-    const [isAuthenticated, setIsAuthenticated] = useState(false); // L'utilisateur est-il authentifié ?
-    const [isLoading, setIsLoading] = useState(true); // Chargement initial (vérification localStorage)
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [user, setUser] = useState(null);
+    const [userParameters, setUserParameters] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-    // Effet pour vérifier l'état d'authentification au chargement initial
+    // Vérifier l'authentification au chargement
     useEffect(() => {
-        console.log("AuthContext: Checking initial auth state...");
-        setIsLoading(true);
-        try {
-            const storedUser = localStorage.getItem('authUser');
-            if (storedUser) {
-                const parsedUser = JSON.parse(storedUser);
-                // Dans une vraie appli, vous pourriez vouloir re-valider le token ici
-                console.log("AuthContext: Found user in localStorage", parsedUser);
-                setUser(parsedUser);
+        const checkAuth = async () => {
+            const storedAuth = localStorage.getItem("isAuthenticated");
+            const storedUser = localStorage.getItem("user");
+            const storedParams = localStorage.getItem("userParameters");
+            
+            if (storedAuth && storedUser) {
                 setIsAuthenticated(true);
-            } else {
-                 console.log("AuthContext: No user found in localStorage.");
+                setUser(JSON.parse(storedUser));
+                
+                if (storedParams) {
+                    setUserParameters(JSON.parse(storedParams));
+                }
             }
-        } catch (error) {
-            console.error("AuthContext: Error reading localStorage", error);
-            // Assurer un état propre en cas d'erreur
-            setUser(null);
-            setIsAuthenticated(false);
-            localStorage.removeItem('authUser');
-        } finally {
-            setIsLoading(false); // Fin du chargement initial
-             console.log("AuthContext: Initial auth check complete.");
-        }
-    }, []); // Le tableau vide assure que cela ne s'exécute qu'au montage
+            
+            setIsLoading(false);
+        };
+        
+        checkAuth();
+    }, []);
 
-    // Fonction de connexion
-    const login = useCallback(async (email, password) => {
-        console.log(`AuthContext: Attempting login for ${email}`);
+    const login = async (email, password) => {
+        setError(null);
         setIsLoading(true);
-
+        
         try {
-            // --- Logique de Bypass pour Développement ---
-            if (email === DEV_BYPASS_USER && password === DEV_BYPASS_PASSWORD) {
-                console.warn("AuthContext: !!! DEVELOPMENT BYPASS ACTIVATED !!!");
-                const bypassUser = { id: 'dev-001', email: DEV_BYPASS_USER, name: 'Dev Bypass User' };
-                setUser(bypassUser);
+            // Connexion avec admin/admin pour le développement
+            if (email === "admin" && password === "admin") {
+                // Simulation d'une connexion réussie avec des droits d'admin
+                const mockUser = { 
+                    email: "admin",
+                    id: "admin_id",
+                    role: "admin"
+                };
+                
+                const mockParameters = {
+                    llm_model: "gpt-4",
+                    available_llm_models: ["gpt-3.5-turbo", "gpt-4", "claude-3"],
+                    split_chunk_size: 1000,
+                    split_chunk_overlap: 200,
+                    similarity_treshold: 0.75,
+                    k: 5,
+                    prompt_template: "Utilise les informations suivantes pour répondre à la question de l'utilisateur.\n\nContexte:\n{context}\n\nQuestion: {question}\n\nRéponse:"
+                };
+                
                 setIsAuthenticated(true);
-                localStorage.setItem('authUser', JSON.stringify(bypassUser)); // Persistance simple
-                console.log("AuthContext: Dev Bypass Successful", bypassUser);
+                setUser(mockUser);
+                setUserParameters(mockParameters);
+                
+                localStorage.setItem("isAuthenticated", "true");
+                localStorage.setItem("user", JSON.stringify(mockUser));
+                localStorage.setItem("userParameters", JSON.stringify(mockParameters));
+                
                 setIsLoading(false);
-                return; // Important: Sortir après le bypass réussi
+                return;
             }
-            // --- Fin de la Logique de Bypass ---
-
-            // --- Logique de Connexion Normale (SIMULÉE) ---
-            // REMPLACER CECI PAR VOTRE VRAI APPEL API BACKEND
-            console.log("AuthContext: Simulating API call for login...");
-            await new Promise(resolve => setTimeout(resolve, 1000)); // Simule une latence réseau
-
-            // Simuler une réponse réussie ou échouée du backend
-            if (email === "user@example.com" && password === "password123") {
-                 // Réponse réussie (simulée)
-                const loggedInUser = { id: 'usr-123', email: email, name: 'Utilisateur Exemple' };
-                console.log("AuthContext: Simulated API Login Successful", loggedInUser);
-                setUser(loggedInUser);
+            
+            // Requête normale à l'API
+            const response = await fetch("http://localhost:5000/login", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ email, password }),
+            });
+    
+            if (response.status === 200) {
+                const data = await response.json();
                 setIsAuthenticated(true);
-                localStorage.setItem('authUser', JSON.stringify(loggedInUser)); // Persistance simple
+    
+                if (data.user_id) {
+                    const userObj = { email, id: data.user_id, role: data.user_role };
+                    setUser(userObj);
+                    localStorage.setItem("isAuthenticated", "true");
+                    localStorage.setItem("user", JSON.stringify(userObj));
+    
+                    try {
+                        const paramsResponse = await fetch(`http://127.0.0.1:5000/parameters/get?user_id=${data.user_id}`, {
+                            method: "GET",
+                            headers: {
+                                "Content-Type": "application/json",
+                            },
+                        });
+    
+                        if (paramsResponse.ok) {
+                            const userParams = await paramsResponse.json();
+                            setUserParameters(userParams);
+                            localStorage.setItem("userParameters", JSON.stringify(userParams));
+                        } else {
+                            throw new Error("Erreur lors de la récupération des paramètres");
+                        }
+                    } catch (paramError) {
+                        console.error("Erreur lors de la récupération des paramètres:", paramError);
+                    }
+                } else {
+                    setError("Erreur : identifiant utilisateur manquant dans la réponse");
+                    console.error("user_id is missing in the response data");
+                }
             } else {
-                // Réponse échouée (simulée)
-                console.warn("AuthContext: Simulated API Login Failed - Invalid credentials");
-                throw new Error("Identifiants invalides (simulation)");
+                setError("Identifiants incorrects");
+                throw new Error("Identifiants incorrects");
             }
-            // --- Fin de la Logique de Connexion Normale (SIMULÉE) ---
-
         } catch (error) {
-            console.error("AuthContext: Login failed", error);
-            setUser(null);
-            setIsAuthenticated(false);
-            localStorage.removeItem('authUser');
-            // Propager l'erreur pour que le composant Login puisse la gérer si besoin
-            throw error;
+            setError("Identifiants incorrects ou problème de connexion");
+            console.error("Error during login:", error);
         } finally {
             setIsLoading(false);
         }
-    }, []); // useCallback pour la stabilité de la référence
+    };       
 
-    // Fonction de déconnexion
-    const logout = useCallback(() => {
-        console.log("AuthContext: Logging out");
-        setUser(null);
+    const logout = () => {
         setIsAuthenticated(false);
-        localStorage.removeItem('authUser'); // Nettoyer la persistance
-    }, []); // useCallback pour la stabilité de la référence
-
-    // Valeur fournie par le contexte
-    const value = {
-        user,
-        isAuthenticated,
-        isLoading,
-        login,
-        logout
+        setUser(null);
+        setUserParameters(null);
+        localStorage.removeItem("isAuthenticated");
+        localStorage.removeItem("user");
+        localStorage.removeItem("userParameters");
     };
 
     return (
-        <AuthContext.Provider value={value}>
-            {/* Ne rend les enfants que lorsque le chargement initial est terminé */}
-            {!isLoading && children}
-            {/* Optionnel: Afficher un indicateur de chargement global pendant l'init */}
-            {/* {isLoading && <div>Loading authentication...</div>} */}
+        <AuthContext.Provider value={{ 
+            isAuthenticated, 
+            user, 
+            userParameters, 
+            setUserParameters, 
+            login, 
+            logout,
+            isLoading,
+            error
+        }}>
+            {children}
         </AuthContext.Provider>
     );
 };
 
-// 3. Créer le hook personnalisé pour utiliser le contexte
-export const useAuth = () => {
-    const context = useContext(AuthContext);
-    if (context === undefined || context === null) {
-        // Ceci arrive si useAuth est utilisé hors d'un AuthProvider
-        throw new Error("useAuth must be used within an AuthProvider");
-    }
-    return context;
-};
+export const useAuth = () => useContext(AuthContext);
