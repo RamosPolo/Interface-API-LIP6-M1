@@ -1,67 +1,129 @@
-import { createContext, useState, useContext } from "react";
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 
-const AuthContext = createContext();
+// 1. Créer le contexte
+const AuthContext = createContext(null);
 
+// Valeurs spéciales pour le bypass (doivent correspondre à Login.jsx)
+const DEV_BYPASS_USER = "dev_bypass_user";
+const DEV_BYPASS_PASSWORD = "dev_bypass_password";
+
+// 2. Créer le fournisseur (Provider)
 export const AuthProvider = ({ children }) => {
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [user, setUser] = useState(null);
-    const [userParameters, setUserParameters] = useState(null);
+    const [user, setUser] = useState(null); // Informations sur l'utilisateur connecté
+    const [isAuthenticated, setIsAuthenticated] = useState(false); // L'utilisateur est-il authentifié ?
+    const [isLoading, setIsLoading] = useState(true); // Chargement initial (vérification localStorage)
 
-    const login = async (email, password) => {
+    // Effet pour vérifier l'état d'authentification au chargement initial
+    useEffect(() => {
+        console.log("AuthContext: Checking initial auth state...");
+        setIsLoading(true);
         try {
-            const response = await fetch("http://localhost:5000/login", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ email, password }),
-            });
-    
-            if (response.status === 200) {
-                const data = await response.json();
+            const storedUser = localStorage.getItem('authUser');
+            if (storedUser) {
+                const parsedUser = JSON.parse(storedUser);
+                // Dans une vraie appli, vous pourriez vouloir re-valider le token ici
+                console.log("AuthContext: Found user in localStorage", parsedUser);
+                setUser(parsedUser);
                 setIsAuthenticated(true);
-    
-                if (data.user_id) {
-                    setUser({ email, id: data.user_id, role: data.user_role });
-                    localStorage.setItem("isAuthenticated", true);
-                    localStorage.setItem("user", JSON.stringify({ email, id: data.user_id, role: data.user_role }));
-    
-                    const paramsResponse = await fetch(`http://127.0.0.1:5000/parameters/get?user_id=${data.user_id}`, {
-                        method: "GET",
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
-                    });
-    
-                    if (paramsResponse.ok) {
-                        const userParams = await paramsResponse.json();
-                        setUserParameters(userParams);
-                        localStorage.setItem("userParameters", JSON.stringify(userParams));
-                    }
-                } else {
-                    console.error("user_id is missing in the response data");
-                }
+            } else {
+                 console.log("AuthContext: No user found in localStorage.");
             }
         } catch (error) {
-            alert("Identifiants incorrects");
-            console.error("Error during login:", error);
+            console.error("AuthContext: Error reading localStorage", error);
+            // Assurer un état propre en cas d'erreur
+            setUser(null);
+            setIsAuthenticated(false);
+            localStorage.removeItem('authUser');
+        } finally {
+            setIsLoading(false); // Fin du chargement initial
+             console.log("AuthContext: Initial auth check complete.");
         }
-    };       
+    }, []); // Le tableau vide assure que cela ne s'exécute qu'au montage
 
-    const logout = () => {
-        setIsAuthenticated(false);
+    // Fonction de connexion
+    const login = useCallback(async (email, password) => {
+        console.log(`AuthContext: Attempting login for ${email}`);
+        setIsLoading(true);
+
+        try {
+            // --- Logique de Bypass pour Développement ---
+            if (email === DEV_BYPASS_USER && password === DEV_BYPASS_PASSWORD) {
+                console.warn("AuthContext: !!! DEVELOPMENT BYPASS ACTIVATED !!!");
+                const bypassUser = { id: 'dev-001', email: DEV_BYPASS_USER, name: 'Dev Bypass User' };
+                setUser(bypassUser);
+                setIsAuthenticated(true);
+                localStorage.setItem('authUser', JSON.stringify(bypassUser)); // Persistance simple
+                console.log("AuthContext: Dev Bypass Successful", bypassUser);
+                setIsLoading(false);
+                return; // Important: Sortir après le bypass réussi
+            }
+            // --- Fin de la Logique de Bypass ---
+
+            // --- Logique de Connexion Normale (SIMULÉE) ---
+            // REMPLACER CECI PAR VOTRE VRAI APPEL API BACKEND
+            console.log("AuthContext: Simulating API call for login...");
+            await new Promise(resolve => setTimeout(resolve, 1000)); // Simule une latence réseau
+
+            // Simuler une réponse réussie ou échouée du backend
+            if (email === "user@example.com" && password === "password123") {
+                 // Réponse réussie (simulée)
+                const loggedInUser = { id: 'usr-123', email: email, name: 'Utilisateur Exemple' };
+                console.log("AuthContext: Simulated API Login Successful", loggedInUser);
+                setUser(loggedInUser);
+                setIsAuthenticated(true);
+                localStorage.setItem('authUser', JSON.stringify(loggedInUser)); // Persistance simple
+            } else {
+                // Réponse échouée (simulée)
+                console.warn("AuthContext: Simulated API Login Failed - Invalid credentials");
+                throw new Error("Identifiants invalides (simulation)");
+            }
+            // --- Fin de la Logique de Connexion Normale (SIMULÉE) ---
+
+        } catch (error) {
+            console.error("AuthContext: Login failed", error);
+            setUser(null);
+            setIsAuthenticated(false);
+            localStorage.removeItem('authUser');
+            // Propager l'erreur pour que le composant Login puisse la gérer si besoin
+            throw error;
+        } finally {
+            setIsLoading(false);
+        }
+    }, []); // useCallback pour la stabilité de la référence
+
+    // Fonction de déconnexion
+    const logout = useCallback(() => {
+        console.log("AuthContext: Logging out");
         setUser(null);
-        setUserParameters(null);
-        localStorage.removeItem("isAuthenticated");
-        localStorage.removeItem("user");
-        localStorage.removeItem("userParameters");
+        setIsAuthenticated(false);
+        localStorage.removeItem('authUser'); // Nettoyer la persistance
+    }, []); // useCallback pour la stabilité de la référence
+
+    // Valeur fournie par le contexte
+    const value = {
+        user,
+        isAuthenticated,
+        isLoading,
+        login,
+        logout
     };
 
     return (
-        <AuthContext.Provider value={{ isAuthenticated, user, userParameters, setUserParameters, login, logout }}>
-            {children}
+        <AuthContext.Provider value={value}>
+            {/* Ne rend les enfants que lorsque le chargement initial est terminé */}
+            {!isLoading && children}
+            {/* Optionnel: Afficher un indicateur de chargement global pendant l'init */}
+            {/* {isLoading && <div>Loading authentication...</div>} */}
         </AuthContext.Provider>
     );
 };
 
-export const useAuth = () => useContext(AuthContext);
+// 3. Créer le hook personnalisé pour utiliser le contexte
+export const useAuth = () => {
+    const context = useContext(AuthContext);
+    if (context === undefined || context === null) {
+        // Ceci arrive si useAuth est utilisé hors d'un AuthProvider
+        throw new Error("useAuth must be used within an AuthProvider");
+    }
+    return context;
+};
