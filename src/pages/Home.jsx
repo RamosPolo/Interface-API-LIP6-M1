@@ -13,7 +13,9 @@ import {
     Copy,
     Edit,
     X,
-    Database
+    Database,
+    ChevronRight,
+    ChevronLeft
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext.jsx";
@@ -253,7 +255,6 @@ const ChatSidebar = ({ chats = [], activeChat, onSelectChat, onNewChat, onDelete
     const sidebarVariants = {
         open: { 
             x: 0,
-            opacity: 1,
             transition: { 
                 type: "spring", 
                 stiffness: 300, 
@@ -261,8 +262,7 @@ const ChatSidebar = ({ chats = [], activeChat, onSelectChat, onNewChat, onDelete
             }
         },
         closed: { 
-            x: "-100%",
-            opacity: 0,
+            x: "100%",
             transition: { 
                 type: "spring", 
                 stiffness: 300, 
@@ -275,8 +275,8 @@ const ChatSidebar = ({ chats = [], activeChat, onSelectChat, onNewChat, onDelete
         <AnimatePresence>
             {visible && (
                 <motion.div
-                    className="fixed inset-y-0 left-0 w-72 bg-white dark:bg-gray-800 shadow-xl z-20 
-                              border-r border-gray-200 dark:border-gray-700 flex flex-col md:relative"
+                    className="fixed inset-y-0 right-0 w-72 bg-white dark:bg-gray-800 shadow-xl z-20 
+                              border-l border-gray-200 dark:border-gray-700 flex flex-col md:relative"
                     initial="closed"
                     animate="open"
                     exit="closed"
@@ -321,7 +321,7 @@ const ChatSidebar = ({ chats = [], activeChat, onSelectChat, onNewChat, onDelete
                                         key={chat.id}
                                         initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, x: -20 }}
+                                        exit={{ opacity: 0, x: 20 }}
                                         onClick={() => onSelectChat(chat.id)}
                                         className={`
                                             flex items-center justify-between w-full px-3 py-3 rounded-xl
@@ -447,7 +447,7 @@ const MessageInput = ({ value, onChange, onSend, disabled, collections, selected
     );
 };
 
-const Home = ({ toggleChatSidebar }) => {
+const Home = () => {
     const [chats, setChats] = useState([
         {
             id: 1,
@@ -490,18 +490,8 @@ const Home = ({ toggleChatSidebar }) => {
 
         fetchCollections();
         
-        // Écran large : ouvrir le sidebar par défaut
-        if (window.innerWidth >= 768) {
-            setIsChatSidebarVisible(true);
-        }
-        
         const handleResize = () => {
             isMobile.current = window.innerWidth < 768;
-            if (window.innerWidth >= 768) {
-                setIsChatSidebarVisible(true);
-            } else {
-                setIsChatSidebarVisible(false);
-            }
         };
         
         window.addEventListener('resize', handleResize);
@@ -642,48 +632,16 @@ const Home = ({ toggleChatSidebar }) => {
 
     const activeMessages = chats.find(c => c.id === activeChat)?.messages || [];
 
-    const toggleChatList = () => {
+    const toggleChatSidebar = () => {
         setIsChatSidebarVisible(!isChatSidebarVisible);
-        if (toggleChatSidebar) toggleChatSidebar();
     };
 
     return (
         <div className="flex h-screen overflow-hidden">
-            {/* Overlay pour mobile quand le sidebar est ouvert */}
-            {isMobile.current && isChatSidebarVisible && (
-                <div 
-                    className="fixed inset-0 bg-black/50 backdrop-blur-sm z-10"
-                    onClick={() => setIsChatSidebarVisible(false)}
-                />
-            )}
-            
-            {/* Sidebar de la liste des conversations */}
-            <ChatSidebar 
-                chats={chats}
-                activeChat={activeChat}
-                onSelectChat={selectChat}
-                onNewChat={createNewChat}
-                onDeleteChat={deleteChat}
-                visible={isChatSidebarVisible}
-                onClose={() => setIsChatSidebarVisible(false)}
-            />
-            
-            {/* Zone de conversation - suppression de l'espace avec flex-1 et pas de gap */}
-            <div className={`
-                flex-1 flex flex-col bg-gray-50 dark:bg-gray-900
-                ${isChatSidebarVisible && !isMobile.current ? 'border-l-0' : ''}
-                transition-all duration-300
-            `}>
+            {/* Zone principale de chat */}
+            <div className="flex-1 flex flex-col bg-gray-50 dark:bg-gray-900 relative">
                 {/* En-tête de la conversation */}
-                <div className="py-3 px-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center shadow-sm">
-                    {isMobile.current && (
-                        <button 
-                            onClick={toggleChatList}
-                            className="mr-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
-                        >
-                            <MessageSquare size={20} className="text-gray-600 dark:text-gray-300" />
-                        </button>
-                    )}
+                <div className="py-3 px-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between shadow-sm">
                     <div className="flex items-center flex-1 min-w-0">
                         <div className="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center mr-3">
                             <MessageSquare size={16} className="text-indigo-600 dark:text-indigo-400" />
@@ -692,6 +650,21 @@ const Home = ({ toggleChatSidebar }) => {
                             {chats.find(c => c.id === activeChat)?.title || "Nouvelle conversation"}
                         </h2>
                     </div>
+                    
+                    {/* Bouton pour ouvrir le menu des conversations à droite */}
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="flex items-center ml-2"
+                        onClick={toggleChatSidebar}
+                    >
+                        {isChatSidebarVisible ? (
+                            <ChevronRight className="h-5 w-5 mr-1" />
+                        ) : (
+                            <ChevronLeft className="h-5 w-5 mr-1" />
+                        )}
+                        <span className="hidden md:inline">Conversations</span>
+                    </Button>
                 </div>
                 
                 {/* Messages */}
@@ -711,6 +684,25 @@ const Home = ({ toggleChatSidebar }) => {
                     onCollectionChange={setSelectedCollection}
                 />
             </div>
+            
+            {/* Overlay pour mobile quand le sidebar est ouvert */}
+            {isMobile.current && isChatSidebarVisible && (
+                <div 
+                    className="fixed inset-0 bg-black/50 backdrop-blur-sm z-10"
+                    onClick={() => setIsChatSidebarVisible(false)}
+                />
+            )}
+            
+            {/* Menu des conversations à droite */}
+            <ChatSidebar 
+                chats={chats}
+                activeChat={activeChat}
+                onSelectChat={selectChat}
+                onNewChat={createNewChat}
+                onDeleteChat={deleteChat}
+                visible={isChatSidebarVisible}
+                onClose={() => setIsChatSidebarVisible(false)}
+            />
         </div>
     );
 };
