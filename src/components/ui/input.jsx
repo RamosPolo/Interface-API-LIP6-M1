@@ -3,6 +3,7 @@ import React from 'react';
 export const Input = ({
                           value,
                           onChange,
+                          onKeyDown,
                           placeholder,
                           className = '',
                           type = 'text',
@@ -16,6 +17,7 @@ export const Input = ({
                 type={type}
                 value={value}
                 onChange={onChange}
+                onKeyDown={onKeyDown}
                 placeholder={placeholder}
                 disabled={disabled}
                 required={required}

@@ -16,7 +16,8 @@ const AddDocuments = () => {
     const [collections, setCollections] = useState([]);
     const [selectedCollection, setSelectedCollection] = useState("");
     const [selectedCollectionForList, setSelectedCollectionForList] = useState("");
-    const [tag, setTag] = useState("");
+    const [tags, setTags] = useState([]);
+    const [input, setInput] = useState("");
     const [documents, setDocuments] = useState([]);
     const [isUploading, setIsUploading] = useState(false);
     const [isCreatingCollection, setIsCreatingCollection] = useState(false);
@@ -142,7 +143,7 @@ const AddDocuments = () => {
         formData.append('file', selectedFile);
         formData.append('collection', selectedCollection);
         formData.append('user_id', user.id);
-        formData.append('tag', tag);
+        formData.append('tags', JSON.stringify(tags));
 
         try {
             const response = await fetch('http://127.0.0.1:5000/document/add', {
@@ -154,7 +155,7 @@ const AddDocuments = () => {
             if (response.ok) {
                 setFileName("");
                 setSelectedFile(null);
-                setTag("");
+                setTags([]);
                 
                 // Toast de succès
                 setResponseMessage("Document ajouté avec succès");
@@ -181,6 +182,25 @@ const AddDocuments = () => {
         }
     };
 
+    const addTag = (value) => {
+        const trimmed = value.trim();
+        if (trimmed && !tags.includes(trimmed)) {
+          setTags([...tags, trimmed]);
+        }
+      };
+    
+    const handleKeyDown = (e) => {
+    if (["Enter", ",", "Tab"].includes(e.key)) {
+        e.preventDefault();
+        addTag(input);
+        setInput("");
+    }
+    };
+
+    const removeTag = (tagToRemove) => {
+    setTags(tags.filter((tag) => tag !== tagToRemove));
+    };
+
     // Filtrer les documents en fonction du terme de recherche
     const filteredDocuments = documents.filter(doc => 
         doc.file_name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -188,7 +208,7 @@ const AddDocuments = () => {
     );
 
     return (
-        <div className="flex flex-col space-y-8 max-w-screen-xl mx-auto p-8">
+        <div className="flex flex-col space-y-8 max-w-screen-xl h-screen max-h-screen mx-auto p-8 overflow-auto">
             {/* Message de notification */}
             {responseMessage && (
                 <div className={`
@@ -253,7 +273,58 @@ const AddDocuments = () => {
                         <h3 className="text-xl font-semibold">Déposer un document</h3>
                     </div>
                 </CardHeader>
-                <CardContent className="p-6">
+                <CardContent className="flex flex-col gap-6 p-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <div className="flex flex-col gap-2">
+                            <label htmlFor="collectionSelect" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Collection
+                            </label>
+                            <Select
+                                value={selectedCollection}
+                                onChange={setSelectedCollection}
+                                options={collections.map((collection) => ({
+                                    value: collection,
+                                    label: collection
+                                }))}
+                                placeholder="Sélectionner une collection"
+                            />
+                        </div>
+
+                        <div className="flex flex-col gap-2">
+                            <label htmlFor="collectionSelect" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Tags (Facultatif)
+                            </label>
+                            <Input
+                                type="text"
+                                value={input}
+                                onChange={(e) => setInput(e.target.value)}
+                                onKeyDown={handleKeyDown}
+                                placeholder="Ajoutez un tag et appuyez sur Entrée"
+                                className="w-full bg-transparent outline-none text-sm text-gray-800 dark:text-white"
+                            />
+                        </div>                 
+                    </div>
+
+                    {tags.length > 0 && (
+                        <div className="mb-4">
+                            <h2 className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">
+                            Tags sélectionnés :
+                            </h2>
+                            <div className="flex flex-wrap gap-2">
+                            {tags.map((tag) => (
+                                <div
+                                    key={tag}
+                                    onClick={() => removeTag(tag)}
+                                    className="flex items-center gap-2 px-3 py-1 bg-indigo-100 dark:bg-indigo-400 text-indigo-400 dark:text-indigo-100 text-sm rounded-full transition-colors hover:bg-indigo-200 dark:hover:bg-indigo-500 cursor-pointer "
+                                >
+                                    <p>{tag}</p>
+                                    <p className="text-base leading-none flex items-center justify-center w-4 h-4">x</p>
+                                </div>                           
+                            ))}
+                            </div>
+                        </div>
+                    )}
+
                     <div
                         onDragOver={handleDragOver}
                         onDragLeave={handleDragLeave}
@@ -315,42 +386,10 @@ const AddDocuments = () => {
                             </Button>
                         )}
                     </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-8">
-                        <div className="flex flex-col gap-2">
-                            <label htmlFor="collectionSelect" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Collection
-                            </label>
-                            <Select
-                                value={selectedCollection}
-                                onChange={setSelectedCollection}
-                                options={collections.map((collection) => ({
-                                    value: collection,
-                                    label: collection
-                                }))}
-                                placeholder="Sélectionner une collection"
-                            />
-                        </div>
-                        <div className="flex flex-col gap-2">
-                            <label htmlFor="tag" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Tag (facultatif)
-                            </label>
-                            <div className="relative">
-                                <Tag className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
-                                <Input
-                                    id="tag"
-                                    value={tag}
-                                    onChange={(e) => setTag(e.target.value)}
-                                    placeholder="Entrez un tag"
-                                    className="pl-9 shadow-sm"
-                                />
-                            </div>
-                        </div>
-                    </div>
                     
                     <Button
                         onClick={handleUpload}
-                        className="w-full mt-8 bg-indigo-600 hover:bg-indigo-700 text-white shadow"
+                        className="w-full bg-indigo-600 hover:bg-indigo-700 text-white shadow"
                         disabled={!selectedFile || !selectedCollection || isUploading}
                     >
                         {isUploading ? (
@@ -419,28 +458,33 @@ const AddDocuments = () => {
                                     <div className="space-y-4 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
                                         {filteredDocuments.map((doc, index) => (
                                             <div 
-                                                key={index} 
-                                                className="flex items-center border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                                            key={index} 
+                                            className="flex items-center border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                                             >
-                                                <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg mr-4">
-                                                    <FileText className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
+                                            <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg mr-4">
+                                                <FileText className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                                                {doc.file_name}
+                                                </h4>
+                                                {doc.tags && doc.tags.length > 0 && (
+                                                <div className="flex items-center flex-wrap gap-2 mt-2">
+                                                    {doc.tags.map((tag, i) => (
+                                                    <div
+                                                        key={i}
+                                                        className="flex items-center gap-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs px-2 py-0.5 rounded-full"
+                                                    >
+                                                        <Tag className="h-3 w-3 text-gray-500 dark:text-gray-400" />
+                                                        <span>{tag}</span>
+                                                    </div>
+                                                    ))}
                                                 </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                                                        {doc.file_name}
-                                                    </h4>
-                                                    {doc.tag && (
-                                                        <div className="flex items-center mt-1">
-                                                            <Tag className="h-3 w-3 text-gray-500 mr-1" />
-                                                            <span className="text-xs text-gray-500 dark:text-gray-400">
-                                                                {doc.tag}
-                                                            </span>
-                                                        </div>
-                                                    )}
-                                                </div>
+                                                )}
+                                            </div>
                                             </div>
                                         ))}
-                                    </div>
+                                        </div>
                                 ) : (
                                     <div className="text-center py-12 bg-gray-50 dark:bg-gray-800/20 rounded-lg border border-dashed border-gray-300 dark:border-gray-700">
                                         <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
