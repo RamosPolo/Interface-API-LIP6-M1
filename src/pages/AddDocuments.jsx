@@ -33,6 +33,10 @@ const AddDocuments = () => {
                 const data = await response.json();
                 if (response.ok) {
                     setCollections(data.collections || []);
+
+                    if (!selectedCollection && data.collections.length > 0) {
+                        setSelectedCollection(data.collections[0]);
+                    }
                 } else {
                     console.error("Erreur lors de la récupération des collections");
                 }
@@ -206,6 +210,43 @@ const AddDocuments = () => {
         doc.file_name.toLowerCase().includes(searchTerm.toLowerCase()) || 
         (doc.tag && doc.tag.toLowerCase().includes(searchTerm.toLowerCase()))
     );
+
+    const handleViewPdf = (source) => {
+        const url = `http://127.0.0.1:5000/document/download?source=${source}`;
+        window.open(url, "_blank");
+    };
+      
+    const handleDelete = async (source, collection) => {
+        if (!source || !collection) {
+            console.error("Source et collection requis.");
+            return;
+        }
+    
+        const confirmed = window.confirm("Voulez-vous vraiment supprimer ce document ?");
+        if (!confirmed) return;
+    
+        try {
+            const params = new URLSearchParams({ source, collection });
+            const response = await fetch(`http://127.0.0.1:5000/document/delete?${params.toString()}`, {
+                method: "DELETE",
+            });
+    
+            const data = await response.json();
+    
+            if (response.ok) {
+                setResponseMessage("Document supprimé avec succès.");
+                setResponseStatus("success");
+            } else {
+                setResponseMessage(`Erreur: ${data.error}`);
+                setResponseStatus("error");
+                console.error("Erreur lors de la suppression :", data.error);
+            }
+        } catch (error) {
+            console.error("Erreur réseau :", error);
+            setResponseMessage("Erreur lors de la suppression.");
+            setResponseStatus("error");
+        }
+    };          
 
     return (
         <div className="flex flex-col space-y-8 max-w-screen-xl h-screen max-h-screen mx-auto p-8 overflow-auto">
@@ -452,7 +493,7 @@ const AddDocuments = () => {
                             </div>
                         </div>
 
-                        <div className="mt-4">
+                        <div>
                             {selectedCollectionForList ? (
                                 filteredDocuments.length > 0 ? (
                                     <div className="space-y-4 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
@@ -460,31 +501,48 @@ const AddDocuments = () => {
                                             <div 
                                             key={index} 
                                             className="flex items-center border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                                            >
-                                            <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg mr-4">
-                                                <FileText className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                                                {doc.file_name}
-                                                </h4>
-                                                {doc.tags && doc.tags.length > 0 && (
-                                                <div className="flex items-center flex-wrap gap-2 mt-2">
-                                                    {doc.tags.map((tag, i) => (
-                                                    <div
-                                                        key={i}
-                                                        className="flex items-center gap-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs px-2 py-0.5 rounded-full"
-                                                    >
-                                                        <Tag className="h-3 w-3 text-gray-500 dark:text-gray-400" />
-                                                        <span>{tag}</span>
-                                                    </div>
-                                                    ))}
+                                            >                      
+
+                                                <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg mr-4">
+                                                    <FileText className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
                                                 </div>
-                                                )}
-                                            </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                                                    {doc.file_name}
+                                                    </h4>
+                                                    {doc.tags && doc.tags.length > 0 && (
+                                                    <div className="flex items-center flex-wrap gap-2 mt-2">
+                                                        {doc.tags.map((tag, i) => (
+                                                        <div
+                                                            key={i}
+                                                            className="flex items-center gap-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs px-2 py-0.5 rounded-full"
+                                                        >
+                                                            <Tag className="h-3 w-3 text-gray-500 dark:text-gray-400" />
+                                                            <span>{tag}</span>
+                                                        </div>
+                                                        ))}
+                                                    </div>
+                                                    )}
+                                                </div>
+                                                <div className="flex gap-4">
+                                                    <div
+                                                        onClick={() => handleViewPdf(doc.source)}
+                                                        className="p-2 rounded hover:text-indigo-500 dark:hover:bg-indigo-500/30"
+                                                        title="Afficher le PDF"
+                                                    >
+                                                        <FileText className="h-5 w-5 text-indigo-500 dark:text-indigo-500" />
+                                                    </div>
+                                                    <div
+                                                        onClick={() => handleDelete(doc.source, doc.collection)}
+                                                        className="p-2 rounded hover:text-red-400 dark:hover:bg-red-400/30"
+                                                        title="Supprimer le document"
+                                                    >
+                                                        <Trash2 className="h-5 w-5 text-red-400 dark:text-red-400" />
+                                                    </div>
+                                                </div>
                                             </div>
                                         ))}
-                                        </div>
+                                    </div>
                                 ) : (
                                     <div className="text-center py-12 bg-gray-50 dark:bg-gray-800/20 rounded-lg border border-dashed border-gray-300 dark:border-gray-700">
                                         <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
