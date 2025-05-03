@@ -236,6 +236,15 @@ const AddDocuments = () => {
             if (response.ok) {
                 setResponseMessage("Document supprimé avec succès.");
                 setResponseStatus("success");
+
+                // Rafraîchir la liste des documents si on est dans la même collection
+                if (selectedCollectionForList === selectedCollection) {
+                    const refreshed = await fetch(`http://127.0.0.1:5000/document/get?collection=${selectedCollection}`);
+                    const refreshedData = await refreshed.json();
+                    if (refreshed.ok) {
+                        setDocuments(refreshedData.documents || []);
+                    }
+                }
             } else {
                 setResponseMessage(`Erreur: ${data.error}`);
                 setResponseStatus("error");
