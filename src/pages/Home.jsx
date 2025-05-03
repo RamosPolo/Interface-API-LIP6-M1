@@ -15,7 +15,8 @@ import {
     X,
     Database,
     ChevronRight,
-    ChevronLeft
+    ChevronLeft,
+    Zap
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext.jsx";
@@ -23,6 +24,264 @@ import { Select } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { motion, AnimatePresence } from "framer-motion";
 
+// Animation du message de bienvenue initial
+const WelcomeMessage = ({ onComplete }) => {
+    const [showMessage, setShowMessage] = useState(true);
+    
+    useEffect(() => {
+        // Durée plus longue pour permettre de lire le message
+        const timer = setTimeout(() => {
+            setShowMessage(false);
+            onComplete();
+        }, 8000); // 8 secondes
+        
+        return () => clearTimeout(timer);
+    }, [onComplete]);
+    
+    if (!showMessage) return null;
+    
+    return (
+        <motion.div 
+            className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-indigo-50/90 to-indigo-50/60 backdrop-blur-sm z-10"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.8 }}
+        >
+            <motion.div 
+                className="text-center px-8 max-w-2xl"
+                initial={{ scale: 0.8, y: 20, opacity: 0 }}
+                animate={{ scale: 1, y: 0, opacity: 1 }}
+                exit={{ scale: 0.8, y: -20, opacity: 0 }}
+                transition={{ 
+                    type: "spring", 
+                    stiffness: 300, 
+                    damping: 20,
+                    delay: 0.2
+                }}
+            >
+                <div className="relative">
+                    <motion.div 
+                        className="w-28 h-28 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl mx-auto mb-8 flex items-center justify-center shadow-xl"
+                        animate={{ 
+                            y: [0, -15, 0],
+                            rotateZ: [0, -5, 5, 0],
+                        }}
+                        transition={{ 
+                            duration: 3, 
+                            ease: "easeInOut",
+                            times: [0, 0.5, 1],
+                            repeat: Infinity
+                        }}
+                    >
+                        <Bot className="h-14 w-14 text-white" />
+                        
+                        {/* Effet de pulsation autour du robot */}
+                        {[1, 2, 3].map((i) => (
+                            <motion.div
+                                key={i}
+                                className="absolute inset-0 border-2 border-indigo-400 rounded-2xl"
+                                initial={{ scale: 0.6, opacity: 0.5 }}
+                                animate={{
+                                    scale: [0.6, 1.2],
+                                    opacity: [0.4, 0]
+                                }}
+                                transition={{
+                                    duration: 2,
+                                    repeat: Infinity,
+                                    repeatType: "loop",
+                                    delay: i * 0.5
+                                }}
+                            />
+                        ))}
+                    </motion.div>
+                </div>
+                
+                <motion.h1 
+                    className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-5 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.4, duration: 0.8 }}
+                >
+                    Bonjour !
+                </motion.h1>
+                
+                <motion.p 
+                    className="text-xl md:text-2xl text-gray-700 dark:text-gray-300 mb-6"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.8, duration: 0.8 }}
+                >
+                    Comment puis-je vous aider aujourd'hui ?
+                </motion.p>
+                
+                <motion.p
+                    className="text-base text-gray-600 dark:text-gray-400 mb-8"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 1.3, duration: 0.8 }}
+                >
+                    Je peux rechercher des informations dans vos documents, répondre à vos questions
+                    et vous aider à analyser vos données.
+                </motion.p>
+                
+                <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 2, duration: 0.8 }}
+                    className="flex justify-center"
+                >
+                    <Button 
+                        onClick={() => {
+                            setShowMessage(false);
+                            onComplete();
+                        }}
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 text-lg rounded-xl shadow-md"
+                    >
+                        Commencer
+                    </Button>
+                </motion.div>
+            </motion.div>
+        </motion.div>
+    );
+};
+
+// Animation améliorée pour le robot qui réfléchit
+const ThinkingAnimation = ({ isVisible }) => (
+    <AnimatePresence>
+        {isVisible && (
+            <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                transition={{ duration: 0.5 }}
+                className="flex items-center justify-center py-8 px-4"
+            >
+                <div className="max-w-md p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 flex items-center">
+                    <div className="mr-4 relative">
+                        <motion.div 
+                            className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center shadow-lg overflow-hidden"
+                            animate={{ 
+                                rotate: [0, 5, -5, 0]
+                            }}
+                            transition={{ 
+                                duration: 4,
+                                repeat: Infinity,
+                                repeatType: "loop"
+                            }}
+                        >
+                            <Bot className="h-8 w-8 text-white" />
+                            
+                            {/* Effet de pulsation pour simuler le "cerveau" qui travaille */}
+                            <motion.div 
+                                className="absolute inset-0 bg-white"
+                                animate={{
+                                    opacity: [0, 0.3, 0]
+                                }}
+                                transition={{
+                                    duration: 2,
+                                    repeat: Infinity,
+                                    repeatType: "loop"
+                                }}
+                            />
+                            
+                            {/* Cercles d'énergie qui émanent du robot */}
+                            {[1, 2, 3].map((i) => (
+                                <motion.div
+                                    key={i}
+                                    className="absolute inset-0 border-2 border-indigo-400 rounded-full"
+                                    initial={{ scale: 0.5, opacity: 0.7 }}
+                                    animate={{
+                                        scale: [0.5, 1.5],
+                                        opacity: [0.7, 0]
+                                    }}
+                                    transition={{
+                                        duration: 2,
+                                        repeat: Infinity,
+                                        repeatType: "loop",
+                                        delay: i * 0.5
+                                    }}
+                                />
+                            ))}
+                        </motion.div>
+                        
+                        {/* Petits éclairs autour du robot */}
+                        <motion.div
+                            className="absolute -top-1 -right-1 text-yellow-500"
+                            animate={{
+                                scale: [0.8, 1.2, 0.8],
+                                opacity: [0.5, 1, 0.5]
+                            }}
+                            transition={{
+                                duration: 1.5,
+                                repeat: Infinity,
+                                repeatType: "loop"
+                            }}
+                        >
+                            <Zap size={12} />
+                        </motion.div>
+                        
+                        <motion.div
+                            className="absolute -bottom-1 -left-1 text-yellow-500"
+                            animate={{
+                                scale: [0.8, 1.2, 0.8],
+                                opacity: [0.5, 1, 0.5]
+                            }}
+                            transition={{
+                                duration: 1.5,
+                                repeat: Infinity,
+                                repeatType: "loop",
+                                delay: 0.5
+                            }}
+                        >
+                            <Zap size={12} />
+                        </motion.div>
+                    </div>
+                    
+                    <div className="flex-1">
+                        <motion.p 
+                            className="text-lg font-medium text-indigo-600 dark:text-indigo-400 mb-2"
+                            animate={{
+                                opacity: [0.7, 1, 0.7]
+                            }}
+                            transition={{
+                                duration: 2,
+                                repeat: Infinity
+                            }}
+                        >
+                            Je réfléchis à votre demande...
+                        </motion.p>
+                        
+                        <motion.p className="text-sm text-gray-600 dark:text-gray-400">
+                            Analyse et traitement des informations en cours. <br />
+                            Préparation d'une réponse pertinente.
+                        </motion.p>
+                        
+                        <div className="flex space-x-2 mt-3">
+                            {[0, 1, 2, 3, 4].map((i) => (
+                                <motion.div
+                                    key={i}
+                                    className="w-2 h-2 rounded-full bg-indigo-600 dark:bg-indigo-400"
+                                    animate={{
+                                        y: [0, -6, 0],
+                                        opacity: [0.5, 1, 0.5]
+                                    }}
+                                    transition={{
+                                        duration: 1.2,
+                                        repeat: Infinity,
+                                        repeatType: "loop",
+                                        delay: i * 0.15
+                                    }}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </motion.div>
+        )}
+    </AnimatePresence>
+);
+// Composants d'état vide et de messages
 const EmptyState = () => (
     <div className="flex flex-col items-center justify-center h-full py-12 text-center px-4">
         <div className="mb-6 w-20 h-20 rounded-full bg-indigo-100 dark:bg-indigo-900/20 flex items-center justify-center">
@@ -41,13 +300,18 @@ const EmptyState = () => (
                 { title: "Obtenir des explications", desc: "Explique-moi le concept de X mentionné dans mes documents." },
                 { title: "Comparer des informations", desc: "Quelles sont les différences entre X et Y selon mes documents ?" }
             ].map((suggestion, idx) => (
-                <button 
+                <motion.button 
                     key={idx}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 * idx, duration: 0.5 }}
                     className="p-4 text-left rounded-xl border border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-700 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all duration-200"
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.98 }}
                 >
                     <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-1">{suggestion.title}</h4>
                     <p className="text-sm text-gray-500 dark:text-gray-400">{suggestion.desc}</p>
-                </button>
+                </motion.button>
             ))}
         </div>
     </div>
@@ -73,6 +337,7 @@ const TypeIndicator = ({ isTyping }) => (
     </AnimatePresence>
 );
 
+// Menu contextuel pour les messages
 const MessageActions = ({ onCopy, onRegenerate, onDelete }) => (
     <motion.div 
         initial={{ opacity: 0, scale: 0.9 }}
@@ -106,7 +371,8 @@ const MessageActions = ({ onCopy, onRegenerate, onDelete }) => (
     </motion.div>
 );
 
-const ChatMessage = ({ message, type, timestamp, index, isLast }) => {
+// Composant de message avec animations
+const ChatMessage = ({ message, type, timestamp, index, isLast, totalMessages }) => {
     const [showActions, setShowActions] = useState(false);
     const actionRef = useRef(null);
     
@@ -128,6 +394,7 @@ const ChatMessage = ({ message, type, timestamp, index, isLast }) => {
         setShowActions(false);
     };
     
+    // Pour les messages système
     const isSystemMessage = message.startsWith("**Système:**");
     if (isSystemMessage) {
         return (
@@ -137,11 +404,21 @@ const ChatMessage = ({ message, type, timestamp, index, isLast }) => {
         );
     }
     
+    // Calculer le délai d'animation en fonction de la position
+    // Les nouveaux messages ont une animation plus rapide
+    const isNewMessage = totalMessages - index <= 2;
+    const delay = isNewMessage ? 0.2 : 0;
+    
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: index * 0.1 }}
+            transition={{ 
+                type: "spring", 
+                stiffness: 300, 
+                damping: 25, 
+                delay: isNewMessage ? index * 0.1 : 0
+            }}
             className={`
                 group flex ${type === 'user' ? 'justify-end' : 'justify-start'} mb-4 px-4 
                 ${isLast ? 'pb-4' : ''}
@@ -151,26 +428,48 @@ const ChatMessage = ({ message, type, timestamp, index, isLast }) => {
                 flex items-start gap-3 max-w-3xl group
                 ${type === 'user' ? 'flex-row-reverse' : 'flex-row'}
             `}>
-                <div className={`
-                    flex-shrink-0 mt-1 w-10 h-10 rounded-full 
-                    flex items-center justify-center shadow-md
-                    ${type === 'user' 
-                        ? 'bg-gradient-to-br from-indigo-600 to-indigo-800' 
-                        : 'bg-gradient-to-br from-purple-600 to-indigo-600'}
-                `}>
+                <motion.div 
+                    className={`
+                        flex-shrink-0 mt-1 w-10 h-10 rounded-full 
+                        flex items-center justify-center shadow-md
+                        ${type === 'user' 
+                            ? 'bg-gradient-to-br from-indigo-600 to-indigo-800' 
+                            : 'bg-gradient-to-br from-purple-600 to-indigo-600'}
+                    `}
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: delay + 0.1 }}
+                >
                     {type === 'user' ? (
                         <User className="w-5 h-5 text-white" />
                     ) : (
                         <Bot className="w-5 h-5 text-white" />
                     )}
-                </div>
-                <div 
+                </motion.div>
+                
+                <motion.div 
                     className={`
                         relative rounded-2xl p-4 
                         ${type === 'user'
                             ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
                             : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 shadow-sm'}
                     `}
+                    initial={{ 
+                        opacity: 0,
+                        scale: 0.95,
+                        x: type === 'user' ? 20 : -20
+                    }}
+                    animate={{ 
+                        opacity: 1,
+                        scale: 1,
+                        x: 0
+                    }}
+                    transition={{ 
+                        type: "spring",
+                        stiffness: 350,
+                        damping: 25,
+                        delay: delay + 0.2
+                    }}
                 >
                     <p className="whitespace-pre-wrap">{message}</p>
                     
@@ -182,12 +481,15 @@ const ChatMessage = ({ message, type, timestamp, index, isLast }) => {
                     
                     {type === 'assistant' && (
                         <div className="absolute top-2 right-2" ref={actionRef}>
-                            <button 
+                            <motion.button 
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: delay + 0.5 }}
                                 onClick={() => setShowActions(!showActions)} 
                                 className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 opacity-0 group-hover:opacity-100 transition-opacity"
                             >
                                 <MoreVertical size={16} />
-                            </button>
+                            </motion.button>
                             
                             <AnimatePresence>
                                 {showActions && (
@@ -200,15 +502,16 @@ const ChatMessage = ({ message, type, timestamp, index, isLast }) => {
                             </AnimatePresence>
                         </div>
                     )}
-                </div>
+                </motion.div>
             </div>
         </motion.div>
     );
 };
-
+// Conteneur principal des messages
 const ChatContainer = ({ messages = [], isTyping }) => {
     const bottomRef = useRef(null);
     const containerRef = useRef(null);
+    const [showWelcome, setShowWelcome] = useState(messages.length <= 1);
     
     useEffect(() => {
         if (bottomRef.current) {
@@ -218,7 +521,9 @@ const ChatContainer = ({ messages = [], isTyping }) => {
     
     return (
         <div ref={containerRef} className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700 scrollbar-track-transparent relative">
-            {messages.length === 0 ? (
+            {showWelcome && messages.length <= 1 ? (
+                <WelcomeMessage onComplete={() => setShowWelcome(false)} />
+            ) : messages.length === 0 ? (
                 <EmptyState />
             ) : (
                 <div className="py-4">
@@ -230,9 +535,16 @@ const ChatContainer = ({ messages = [], isTyping }) => {
                             timestamp={msg.timestamp}
                             index={idx}
                             isLast={idx === messages.length - 1}
+                            totalMessages={messages.length}
                         />
                     ))}
-                    <TypeIndicator isTyping={isTyping} />
+                    
+                    {isTyping ? (
+                        <ThinkingAnimation isVisible={isTyping} />
+                    ) : (
+                        <TypeIndicator isTyping={isTyping} />
+                    )}
+                    
                     <div ref={bottomRef} />
                 </div>
             )}
@@ -240,6 +552,7 @@ const ChatContainer = ({ messages = [], isTyping }) => {
     );
 };
 
+// Barre latérale des conversations
 const ChatSidebar = ({ chats = [], activeChat, onSelectChat, onNewChat, onDeleteChat, visible, onClose }) => {
     const [searchTerm, setSearchTerm] = useState("");
     
@@ -293,13 +606,18 @@ const ChatSidebar = ({ chats = [], activeChat, onSelectChat, onNewChat, onDelete
                             </button>
                         </div>
                         
-                        <Button
-                            onClick={onNewChat}
-                            className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white py-2 rounded-xl shadow-md transition-all duration-200"
+                        <motion.div 
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
                         >
-                            <Plus className="w-5 h-5 mr-2" />
-                            Nouvelle conversation
-                        </Button>
+                            <Button
+                                onClick={onNewChat}
+                                className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white py-2 rounded-xl shadow-md transition-all duration-200 hover:shadow-lg"
+                            >
+                                <Plus className="w-5 h-5 mr-2" />
+                                Nouvelle conversation
+                            </Button>
+                        </motion.div>
                         
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
@@ -316,13 +634,16 @@ const ChatSidebar = ({ chats = [], activeChat, onSelectChat, onNewChat, onDelete
                     <div className="flex-1 overflow-y-auto p-2 space-y-1">
                         <AnimatePresence>
                             {filteredChats.length > 0 ? (
-                                filteredChats.map((chat) => (
+                                filteredChats.map((chat, idx) => (
                                     <motion.button
                                         key={chat.id}
                                         initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         exit={{ opacity: 0, x: 20 }}
+                                        transition={{ delay: idx * 0.05 }}
                                         onClick={() => onSelectChat(chat.id)}
+                                        whileHover={{ scale: 1.02 }}
+                                        whileTap={{ scale: 0.98 }}
                                         className={`
                                             flex items-center justify-between w-full px-3 py-3 rounded-xl
                                             group transition-all duration-200
@@ -332,14 +653,6 @@ const ChatSidebar = ({ chats = [], activeChat, onSelectChat, onNewChat, onDelete
                                         `}
                                     >
                                         <div className="flex items-center overflow-hidden">
-                                            <div className={`
-                                                flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center mr-3
-                                                ${activeChat === chat.id 
-                                                    ? 'bg-indigo-600 text-white' 
-                                                    : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}
-                                            `}>
-                                                <MessageSquare size={16} />
-                                            </div>
                                             <div className="flex-1 min-w-0 text-left">
                                                 <p className="font-medium truncate">{chat.title}</p>
                                                 <p className="text-xs truncate text-gray-500 dark:text-gray-400">
@@ -350,24 +663,42 @@ const ChatSidebar = ({ chats = [], activeChat, onSelectChat, onNewChat, onDelete
                                             </div>
                                         </div>
                                         
-                                        <button 
+                                        <motion.button 
                                             onClick={(e) => handleDeleteChat(e, chat.id)}
                                             className="p-1 rounded-full text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 opacity-0 group-hover:opacity-100 transition-opacity"
+                                            whileHover={{ scale: 1.2 }}
+                                            whileTap={{ scale: 0.9 }}
                                         >
                                             <Trash2 size={16} />
-                                        </button>
+                                        </motion.button>
                                     </motion.button>
                                 ))
                             ) : (
-                                <div className="text-center py-8">
-                                    <MessageSquare className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-3" />
+                                <motion.div 
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    transition={{ delay: 0.2 }}
+                                    className="text-center py-8"
+                                >
+                                    <motion.div
+                                        animate={{ 
+                                            y: [0, -10, 0],
+                                            opacity: [0.7, 1, 0.7]
+                                        }}
+                                        transition={{ 
+                                            repeat: Infinity,
+                                            duration: 3
+                                        }}
+                                    >
+                                        <MessageSquare className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-3" />
+                                    </motion.div>
                                     <p className="text-gray-500 dark:text-gray-400">
                                         {searchTerm 
                                             ? "Aucune conversation trouvée" 
                                             : "Aucune conversation"
                                         }
                                     </p>
-                                </div>
+                                </motion.div>
                             )}
                         </AnimatePresence>
                     </div>
@@ -377,20 +708,27 @@ const ChatSidebar = ({ chats = [], activeChat, onSelectChat, onNewChat, onDelete
     );
 };
 
+// Composant de saisie de message
 const MessageInput = ({ value, onChange, onSend, disabled, collections, selectedCollection, onCollectionChange }) => {
     const textareaRef = useRef(null);
     
     useEffect(() => {
         if (textareaRef.current) {
             textareaRef.current.style.height = 'auto';
-            textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 150) + 'px';
+            // Permet d'avoir une zone de texte plus grande qui peut contenir plus de texte
+            textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 250) + 'px';
         }
     }, [value]);
     
     return (
-        <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-8">
+        <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6">
             <div className="max-w-4xl mx-auto">
-                <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mb-6">
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                    className="flex flex-col md:flex-row items-start md:items-center gap-4 mb-6"
+                >
                     <div className="w-full md:w-64">
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Collection
@@ -406,17 +744,22 @@ const MessageInput = ({ value, onChange, onSend, disabled, collections, selected
                             placeholder="Sélectionner une collection"
                         />
                     </div>
-                </div>
+                </motion.div>
 
-                <div className="relative rounded-xl border-2 border-gray-300 dark:border-gray-600 transition-all duration-200 focus-within:border-indigo-500 dark:focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/20 bg-white dark:bg-gray-800 shadow-sm overflow-hidden">
+                <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.1 }}
+                    className="relative rounded-xl border-2 border-gray-300 dark:border-gray-600 transition-all duration-200 focus-within:border-indigo-500 dark:focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/20 bg-white dark:bg-gray-800 shadow-sm overflow-hidden"
+                >
                     <textarea
                         ref={textareaRef}
                         value={value}
                         onChange={(e) => onChange(e.target.value)}
-                        placeholder="Posez votre question..."
-                        className="w-full pt-5 pb-12 px-5 resize-none outline-none bg-transparent rounded-xl dark:text-white text-base"
-                        rows={2}
-                        style={{ maxHeight: '150px' }}
+                        placeholder="Posez votre question... Vous pouvez écrire un texte plus long en utilisant Shift+Entrée pour ajouter des sauts de ligne."
+                        className="w-full pt-5 pb-16 px-5 resize-none outline-none bg-transparent rounded-xl dark:text-white text-base"
+                        rows={3}
+                        style={{ minHeight: '120px', maxHeight: '250px' }}
                         onKeyDown={(e) => {
                             if (e.key === 'Enter' && !e.shiftKey) {
                                 e.preventDefault();
@@ -426,27 +769,39 @@ const MessageInput = ({ value, onChange, onSend, disabled, collections, selected
                         disabled={disabled}
                     />
                     <div className="absolute bottom-3 right-3 flex items-center">
-                        <Button 
-                            onClick={onSend}
-                            disabled={disabled || !value.trim() || !selectedCollection}
-                            className="rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white p-2 h-11 w-11 flex items-center justify-center shadow-md disabled:opacity-50 disabled:pointer-events-none"
+                        <motion.div
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
                         >
-                            {disabled ? (
-                                <Loader className="w-5 h-5 animate-spin" />
-                            ) : (
-                                <Send className="w-5 h-5" />
-                            )}
-                        </Button>
+                            <Button 
+                                onClick={onSend}
+                                disabled={disabled || !value.trim() || !selectedCollection}
+                                className="rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white p-2 h-12 w-12 flex items-center justify-center shadow-md disabled:opacity-50 disabled:pointer-events-none"
+                            >
+                                {disabled ? (
+                                    <Loader className="w-5 h-5 animate-spin" />
+                                ) : (
+                                    <Send className="w-5 h-5" />
+                                )}
+                            </Button>
+                        </motion.div>
                     </div>
                     <div className="absolute bottom-4 left-5 text-xs text-gray-500 dark:text-gray-400">
-                        Appuyez sur <kbd className="px-1 py-0.5 rounded bg-gray-100 dark:bg-gray-700">Entrée</kbd> pour envoyer
+                        <span className="flex items-center">
+                            <kbd className="px-1.5 py-0.5 mr-1 rounded bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 shadow-sm">Shift</kbd> 
+                            + 
+                            <kbd className="px-1.5 py-0.5 mx-1 rounded bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 shadow-sm">Entrée</kbd> 
+                            pour ajouter un saut de ligne • 
+                            <kbd className="px-1.5 py-0.5 mx-1 rounded bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 shadow-sm">Entrée</kbd> 
+                            pour envoyer
+                        </span>
                     </div>
-                </div>
+                </motion.div>
             </div>
         </div>
     );
 };
-
+// Composant principal Home
 const Home = () => {
     const [chats, setChats] = useState([
         {
@@ -545,7 +900,11 @@ const Home = () => {
 
             const data = await response.json();
             
-            // Petit délai pour une expérience plus naturelle
+            // Délai plus long pour permettre de voir l'animation de réflexion
+            // Entre 3 et 6 secondes selon la longueur de la réponse
+            const responseLength = data.response?.length || 0;
+            const thinkingTime = Math.min(3000 + (responseLength / 100), 6000);
+            
             setTimeout(() => {
                 setIsTyping(false);
                 
@@ -565,7 +924,7 @@ const Home = () => {
                 });
                 setChats(finalChats);
                 setIsLoading(false);
-            }, 500);
+            }, thinkingTime);
         } catch (error) {
             console.error("Erreur lors de l'envoi de la requête:", error);
             
