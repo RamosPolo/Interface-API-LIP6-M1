@@ -16,7 +16,10 @@ const AddDocuments = () => {
     const [collections, setCollections] = useState([]);
     const [selectedCollection, setSelectedCollection] = useState("");
     const [selectedCollectionForList, setSelectedCollectionForList] = useState("");
+    const [documentsByTag, setDocumentsByTag] = useState([]);
     const [tags, setTags] = useState([]);
+    const [dbTags, setDbTags] = useState([]);
+    const [selectedTag, setSelectedTag] = useState("");
     const [input, setInput] = useState("");
     const [documents, setDocuments] = useState([]);
     const [isUploading, setIsUploading] = useState(false);
@@ -48,7 +51,46 @@ const AddDocuments = () => {
         fetchCollections();
     }, []);
 
-    // Récupérer les documents pour la liste
+    // 🔹 Récupérer tous les tags
+    useEffect(() => {
+        const fetchTags = async () => {
+        try {
+            const response = await fetch("http://127.0.0.1:5000/document/get_tags");
+            const data = await response.json();
+            if (response.ok) {
+            setDbTags(data.tags || []);
+            } else {
+            console.error("Erreur lors de la récupération des tags");
+            }
+        } catch (error) {
+            console.error("Erreur lors du fetch des tags:", error);
+        }
+        };
+
+        fetchTags();
+    }, []);
+
+    // 🔹 Récupérer les documents pour le tag sélectionné
+    useEffect(() => {
+        if (!selectedTag) return;
+
+        const fetchDocumentsByTag = async () => {
+        try {
+            const response = await fetch(`http://127.0.0.1:5000/document/get_by_tag?tag=${selectedTag}`);
+            const data = await response.json();
+            if (response.ok) {
+            setDocumentsByTag(data.documents || []);
+            } else {
+            console.error("Erreur lors de la récupération des documents");
+            }
+        } catch (error) {
+            console.error("Erreur lors du fetch des documents:", error);
+        }
+        };
+
+        fetchDocumentsByTag();
+    }, [selectedTag]);
+
     useEffect(() => {
         if (!selectedCollectionForList) return;
 
@@ -160,20 +202,33 @@ const AddDocuments = () => {
                 setFileName("");
                 setSelectedFile(null);
                 setTags([]);
-                
-                // Toast de succès
+                setDocumentsByTag([]);
+                setDbTags([]);
+
                 setResponseMessage("Document ajouté avec succès");
                 setResponseStatus('success');
 
-                // Rafraîchir la liste des documents si on est dans la même collection
                 if (selectedCollectionForList === selectedCollection) {
-                    const refreshed = await fetch(`http://127.0.0.1:5000/document/get?collection=${selectedCollection}`);
-                    const refreshedData = await refreshed.json();
-                    if (refreshed.ok) {
-                        setDocuments(refreshedData.documents || []);
+                    const refreshedDocumentsResponse = await fetch(`http://127.0.0.1:5000/document/get?collection=${selectedCollection}`);
+                    if (refreshedDocumentsResponse.ok) {
+                        const refreshedDocuments = await refreshedDocumentsResponse.json();
+                        setDocuments(refreshedDocuments.documents || []);
                     }
                 }
-            } else {
+
+                const refreshedByTagResponse = await fetch(`http://127.0.0.1:5000/document/get_by_tag?tag=${selectedTag}`);
+                if (refreshedByTagResponse.ok) {
+                    const refreshedByTagData = await refreshedByTagResponse.json();
+                    setDocumentsByTag(refreshedByTagData.documents || []);
+                }
+
+                const refreshedTagsResponse = await fetch(`http://127.0.0.1:5000/document/get_tags`);
+                if (refreshedTagsResponse.ok) {
+                    const refreshedTagsData = await refreshedTagsResponse.json();
+                    setDbTags(refreshedTagsData.tags || []);
+                }
+            }
+            else {
                 setResponseMessage(`Erreur: ${data.error}`);
                 setResponseStatus('error');
             }
@@ -237,12 +292,34 @@ const AddDocuments = () => {
                 setResponseMessage("Document supprimé avec succès.");
                 setResponseStatus("success");
 
-                // Rafraîchir la liste des documents si on est dans la même collection
+                setDocuments([]);
+                setDocumentsByTag([]);
+                setDbTags([]);
+
+                setResponseMessage("Document ajouté avec succès");
+                setResponseStatus('success');
+
                 if (selectedCollectionForList === selectedCollection) {
-                    const refreshed = await fetch(`http://127.0.0.1:5000/document/get?collection=${selectedCollection}`);
-                    const refreshedData = await refreshed.json();
-                    if (refreshed.ok) {
-                        setDocuments(refreshedData.documents || []);
+                    const refreshedDocumentsResponse = await fetch(`http://127.0.0.1:5000/document/get?collection=${selectedCollection}`);
+                    if (refreshedDocumentsResponse.ok) {
+                        const refreshedDocuments = await refreshedDocumentsResponse.json();
+                        setDocuments(refreshedDocuments.documents || []);
+                    }
+                }
+
+                const refreshedByTagResponse = await fetch(`http://127.0.0.1:5000/document/get_by_tag?tag=${selectedTag}`);
+                if (refreshedByTagResponse.ok) {
+                    const refreshedByTagData = await refreshedByTagResponse.json();
+                    setDocumentsByTag(refreshedByTagData.documents || []);
+                }
+
+                const refreshedTagsResponse = await fetch(`http://127.0.0.1:5000/document/get_tags`);
+                if (refreshedTagsResponse.ok) {
+                    const refreshedTagsData = await refreshedTagsResponse.json();
+                    setDbTags(refreshedTagsData.tags || []);
+
+                    if (!refreshedTagsData.tags || refreshedTagsData.tags.length === 0 || !refreshedTagsData.tags.includes(selectedTag)) {
+                        setSelectedTag("");
                     }
                 }
             } else {
@@ -255,7 +332,58 @@ const AddDocuments = () => {
             setResponseMessage("Erreur lors de la suppression.");
             setResponseStatus("error");
         }
-    };          
+    };
+    
+    const handleDeleteAllByTag = async () => {
+        if (!selectedTag) return;
+    
+        const confirmed = window.confirm("Voulez-vous vraiment supprimer ce tag et l'ensemble de ses documents associés ?");
+        if (!confirmed) return;
+
+        try {
+          const response = await fetch(`http://127.0.0.1:5000/document/delete_by_tag?tag=${selectedTag}`, {
+            method: "DELETE",
+          });
+    
+          if (response.ok) {
+            setDocuments([]);
+            setDocumentsByTag([]);
+            setDbTags([]);
+
+            setResponseMessage("Document ajouté avec succès");
+            setResponseStatus('success');
+
+            if (selectedCollectionForList === selectedCollection) {
+                const refreshedDocumentsResponse = await fetch(`http://127.0.0.1:5000/document/get?collection=${selectedCollection}`);
+                if (refreshedDocumentsResponse.ok) {
+                    const refreshedDocuments = await refreshedDocumentsResponse.json();
+                    setDocuments(refreshedDocuments.documents || []);
+                }
+            }
+
+            const refreshedByTagResponse = await fetch(`http://127.0.0.1:5000/document/get_by_tag?tag=${selectedTag}`);
+            if (refreshedByTagResponse.ok) {
+                const refreshedByTagData = await refreshedByTagResponse.json();
+                setDocumentsByTag(refreshedByTagData.documents || []);
+            }
+
+            const refreshedTagsResponse = await fetch(`http://127.0.0.1:5000/document/get_tags`);
+            if (refreshedTagsResponse.ok) {
+                const refreshedTagsData = await refreshedTagsResponse.json();
+                setDbTags(refreshedTagsData.tags || []);
+
+                if (!refreshedTagsData.tags || refreshedTagsData.tags.length === 0 || !refreshedTagsData.tags.includes(selectedTag)) {
+                    setSelectedTag("");
+                }
+            }
+
+          } else {
+            console.error("Erreur lors de la suppression des documents par tag");
+          }
+        } catch (error) {
+          console.error("Erreur lors de la suppression groupée:", error);
+        }
+    };
 
     return (
         <div className="flex flex-col space-y-8 max-w-screen-xl h-screen max-h-screen mx-auto p-8 overflow-auto">
@@ -573,6 +701,123 @@ const AddDocuments = () => {
                             )}
                         </div>
                     </div>
+                </CardContent>
+            </Card>
+
+            <Card className="shadow-md">
+                <CardHeader className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-t-lg pb-4">
+                    <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <Tag className="h-6 w-6" />
+                        <h3 className="text-xl font-semibold">Gestion des tags</h3>
+                    </div>
+                    <div className="text-sm">
+                        {dbTags.length} tag{dbTags.length !== 1 ? 's' : ''}
+                    </div>
+                    </div>
+                </CardHeader>
+                <CardContent className="p-6 space-y-6">
+                    {dbTags.length === 0 ? (
+                    <div className="text-center py-8 bg-gray-50 dark:bg-gray-800/20 rounded-lg border border-dashed border-gray-300 dark:border-gray-700">
+                        <Tag className="h-10 w-10 text-gray-400 mx-auto mb-3" />
+                        <p className="text-gray-500 dark:text-gray-400">Aucun tag trouvé.</p>
+                        <p className="text-sm text-gray-400 dark:text-gray-500">
+                        Les tags apparaîtront automatiquement lorsque des documents seront associés à des tags.
+                        </p>
+                    </div>
+                    ) : (
+                    <>
+                        <div className="flex flex-wrap gap-3">
+                        {dbTags.map((tag) => (
+                            <button
+                            key={tag}
+                            onClick={() => setSelectedTag(tag)}
+                            className={`px-3 py-1 rounded-full text-sm border ${
+                                selectedTag === tag
+                                ? "bg-red-500 text-white border-red-500"
+                                : "border-gray-300 text-gray-700 hover:bg-gray-100"
+                            }`}
+                            >
+                            {tag}
+                            </button>
+                        ))}
+                        </div>
+
+                        {!selectedTag && (
+                        <div className="text-center py-12 bg-gray-50 dark:bg-gray-800/20 rounded-lg border border-dashed border-gray-300 dark:border-gray-700">
+                            <Database className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                            <p className="text-gray-500 dark:text-gray-400">
+                            Sélectionnez un tag pour voir ses documents.
+                            </p>
+                        </div>
+                        )}
+                    </>
+                    )}
+
+                    {selectedTag && (
+                    <>
+                        <div className="flex justify-between items-center mt-4">
+                        <h4 className="text-md font-semibold">Documents associés à « {selectedTag} »</h4>
+                        <button
+                            onClick={handleDeleteAllByTag}
+                            className="text-sm text-red-500 hover:underline"
+                        >
+                            Supprimer le tag
+                        </button>
+                        </div>
+
+                        {documentsByTag.length === 0 ? (
+                        <p className="text-gray-500 mt-4">Aucun document trouvé pour ce tag.</p>
+                        ) : (
+                        <div className="space-y-3 max-h-96 overflow-y-auto pr-1 custom-scrollbar">
+                            {documentsByTag.map((doc, index) => (
+                            <div
+                                key={index}
+                                className="flex items-center border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                            >
+                                <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg mr-4">
+                                <FileText className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                                    {doc.file_name} - {doc.collection}
+                                </h4>
+                                {doc.tags && doc.tags.length > 0 && (
+                                    <div className="flex items-center flex-wrap gap-2 mt-2">
+                                    {doc.tags.map((tag, index) => (
+                                        <div
+                                        key={index}
+                                        className="flex items-center gap-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs px-2 py-0.5 rounded-full"
+                                        >
+                                        <Tag className="h-3 w-3 text-gray-500 dark:text-gray-400" />
+                                        <span>{tag}</span>
+                                        </div>
+                                    ))}
+                                    </div>
+                                )}
+                                </div>
+                                <div className="flex gap-4">
+                                <div
+                                    onClick={() => handleViewPdf(doc.source)}
+                                    className="p-2 rounded hover:text-indigo-500 dark:hover:bg-indigo-500/30"
+                                    title="Afficher le PDF"
+                                >
+                                    <FileText className="h-5 w-5 text-indigo-500 dark:text-indigo-500" />
+                                </div>
+                                <div
+                                    onClick={() => handleDelete(doc.source, doc.collection)}
+                                    className="p-2 rounded hover:text-red-400 dark:hover:bg-red-400/30"
+                                    title="Supprimer le document"
+                                >
+                                    <Trash2 className="h-5 w-5 text-red-400 dark:text-red-400" />
+                                </div>
+                                </div>
+                            </div>
+                            ))}
+                        </div>
+                        )}
+                    </>
+                    )}
                 </CardContent>
             </Card>
         </div>
