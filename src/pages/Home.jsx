@@ -42,14 +42,17 @@ const WelcomeMessage = ({ onComplete }) => {
     
     return (
         <motion.div 
-            className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-indigo-50/90 to-indigo-50/60 backdrop-blur-sm z-10"
+            className="absolute inset-0 flex items-center justify-center bg-white/90 dark:bg-gray-900/90 backdrop-blur-md z-10"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.8 }}
         >
+            {/* Pattern décoratif en arrière-plan */}
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:24px_24px] opacity-50"></div>
+            
             <motion.div 
-                className="text-center px-8 max-w-2xl"
+                className="text-center px-8 max-w-2xl relative z-10"
                 initial={{ scale: 0.8, y: 20, opacity: 0 }}
                 animate={{ scale: 1, y: 0, opacity: 1 }}
                 exit={{ scale: 0.8, y: -20, opacity: 0 }}
@@ -76,15 +79,15 @@ const WelcomeMessage = ({ onComplete }) => {
                     >
                         <Bot className="h-14 w-14 text-white" />
                         
-                        {/* Effet de pulsation autour du robot */}
+                        {/* Effet de pulsation amélioré autour du robot */}
                         {[1, 2, 3].map((i) => (
                             <motion.div
                                 key={i}
-                                className="absolute inset-0 border-2 border-indigo-400 rounded-2xl"
-                                initial={{ scale: 0.6, opacity: 0.5 }}
+                                className="absolute inset-0 border-2 border-indigo-400/70 rounded-2xl"
+                                initial={{ scale: 0.6, opacity: 0.6 }}
                                 animate={{
                                     scale: [0.6, 1.2],
-                                    opacity: [0.4, 0]
+                                    opacity: [0.6, 0]
                                 }}
                                 transition={{
                                     duration: 2,
@@ -94,11 +97,24 @@ const WelcomeMessage = ({ onComplete }) => {
                                 }}
                             />
                         ))}
+                        
+                        {/* Brillance supplémentaire pour effet de profondeur */}
+                        <motion.div
+                            className="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent rounded-2xl"
+                            animate={{
+                                opacity: [0.3, 0.6, 0.3]
+                            }}
+                            transition={{
+                                duration: 3,
+                                repeat: Infinity,
+                                repeatType: "loop"
+                            }}
+                        />
                     </motion.div>
                 </div>
                 
                 <motion.h1 
-                    className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-5 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent"
+                    className="text-4xl md:text-5xl font-bold mb-5 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.4, duration: 0.8 }}
@@ -107,7 +123,7 @@ const WelcomeMessage = ({ onComplete }) => {
                 </motion.h1>
                 
                 <motion.p 
-                    className="text-xl md:text-2xl text-gray-700 dark:text-gray-300 mb-6"
+                    className="text-xl md:text-2xl text-gray-900 dark:text-white mb-6"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.8, duration: 0.8 }}
@@ -116,7 +132,7 @@ const WelcomeMessage = ({ onComplete }) => {
                 </motion.p>
                 
                 <motion.p
-                    className="text-base text-gray-600 dark:text-gray-400 mb-8"
+                    className="text-base text-gray-800 dark:text-gray-200 mb-8"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 1.3, duration: 0.8 }}
@@ -136,7 +152,7 @@ const WelcomeMessage = ({ onComplete }) => {
                             setShowMessage(false);
                             onComplete();
                         }}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 text-lg rounded-xl shadow-md"
+                        className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-8 py-3 text-lg rounded-xl shadow-md transition-all duration-300 hover:shadow-lg"
                     >
                         Commencer
                     </Button>
@@ -338,61 +354,29 @@ const TypeIndicator = ({ isTyping }) => (
 );
 
 // Menu contextuel pour les messages
-const MessageActions = ({ onCopy, onRegenerate, onDelete }) => (
-    <motion.div 
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.9 }}
-        className="absolute top-0 right-0 mt-2 mr-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden z-10"
-    >
-        <div className="p-1">
-            <button 
-                onClick={onCopy} 
-                className="flex items-center gap-2 w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
+const MessageActions = ({ onCopy, onDelete }) => {
+    return (
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute -bottom-5 right-2 flex gap-3 z-20"
+        >
+            <motion.button
+                whileHover={{ scale: 1.2 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={onCopy}
+                className="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                title="Copier"
             >
                 <Copy size={16} />
-                <span>Copier</span>
-            </button>
-            <button 
-                onClick={onRegenerate} 
-                className="flex items-center gap-2 w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
-            >
-                <Edit size={16} />
-                <span>Régénérer</span>
-            </button>
-            <button 
-                onClick={onDelete} 
-                className="flex items-center gap-2 w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
-            >
-                <Trash2 size={16} />
-                <span>Supprimer</span>
-            </button>
-        </div>
-    </motion.div>
-);
-
+            </motion.button>
+        </motion.div>
+    );
+};
 // Composant de message avec animations
 const ChatMessage = ({ message, type, timestamp, index, isLast, totalMessages }) => {
-    const [showActions, setShowActions] = useState(false);
-    const actionRef = useRef(null);
-    
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (actionRef.current && !actionRef.current.contains(event.target)) {
-                setShowActions(false);
-            }
-        };
-        
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => {
-            document.removeEventListener("mousedown", handleClickOutside);
-        };
-    }, []);
-    
-    const handleCopy = () => {
-        navigator.clipboard.writeText(message);
-        setShowActions(false);
-    };
+    const [isHovered, setIsHovered] = useState(false);
     
     // Pour les messages système
     const isSystemMessage = message.startsWith("**Système:**");
@@ -405,9 +389,13 @@ const ChatMessage = ({ message, type, timestamp, index, isLast, totalMessages })
     }
     
     // Calculer le délai d'animation en fonction de la position
-    // Les nouveaux messages ont une animation plus rapide
     const isNewMessage = totalMessages - index <= 2;
     const delay = isNewMessage ? 0.2 : 0;
+    
+    const handleCopy = () => {
+        navigator.clipboard.writeText(message);
+        // Feedback visuel optionnel ici
+    };
     
     return (
         <motion.div
@@ -420,12 +408,14 @@ const ChatMessage = ({ message, type, timestamp, index, isLast, totalMessages })
                 delay: isNewMessage ? index * 0.1 : 0
             }}
             className={`
-                group flex ${type === 'user' ? 'justify-end' : 'justify-start'} mb-4 px-4 
+                group flex ${type === 'user' ? 'justify-end' : 'justify-start'} mb-6 px-4 
                 ${isLast ? 'pb-4' : ''}
             `}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
         >
             <div className={`
-                flex items-start gap-3 max-w-3xl group
+                flex items-start gap-3 max-w-3xl group relative
                 ${type === 'user' ? 'flex-row-reverse' : 'flex-row'}
             `}>
                 <motion.div 
@@ -447,66 +437,56 @@ const ChatMessage = ({ message, type, timestamp, index, isLast, totalMessages })
                     )}
                 </motion.div>
                 
-                <motion.div 
-                    className={`
-                        relative rounded-2xl p-4 
-                        ${type === 'user'
-                            ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
-                            : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 shadow-sm'}
-                    `}
-                    initial={{ 
-                        opacity: 0,
-                        scale: 0.95,
-                        x: type === 'user' ? 20 : -20
-                    }}
-                    animate={{ 
-                        opacity: 1,
-                        scale: 1,
-                        x: 0
-                    }}
-                    transition={{ 
-                        type: "spring",
-                        stiffness: 350,
-                        damping: 25,
-                        delay: delay + 0.2
-                    }}
-                >
-                    <p className="whitespace-pre-wrap">{message}</p>
+                <div className="relative pb-6">
+                    {/* Bulle de message */}
+                    <motion.div 
+                        className={`
+                            rounded-2xl p-4 
+                            ${type === 'user'
+                                ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white'
+                                : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 shadow-sm'}
+                        `}
+                        initial={{ 
+                            opacity: 0,
+                            scale: 0.95,
+                            x: type === 'user' ? 20 : -20
+                        }}
+                        animate={{ 
+                            opacity: 1,
+                            scale: 1,
+                            x: 0
+                        }}
+                        transition={{ 
+                            type: "spring",
+                            stiffness: 350,
+                            damping: 25,
+                            delay: delay + 0.2
+                        }}
+                    >
+                        <p className="whitespace-pre-wrap">{message}</p>
+                        
+                        {timestamp && (
+                            <div className="text-xs mt-2 opacity-70">
+                                {timestamp}
+                            </div>
+                        )}
+                    </motion.div>
                     
-                    {timestamp && (
-                        <div className="text-xs mt-2 opacity-70">
-                            {timestamp}
-                        </div>
-                    )}
-                    
-                    {type === 'assistant' && (
-                        <div className="absolute top-2 right-2" ref={actionRef}>
-                            <motion.button 
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                transition={{ delay: delay + 0.5 }}
-                                onClick={() => setShowActions(!showActions)} 
-                                className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                                <MoreVertical size={16} />
-                            </motion.button>
-                            
-                            <AnimatePresence>
-                                {showActions && (
-                                    <MessageActions 
-                                        onCopy={handleCopy}
-                                        onRegenerate={() => {}}
-                                        onDelete={() => {}}
-                                    />
-                                )}
-                            </AnimatePresence>
-                        </div>
-                    )}
-                </motion.div>
+                    {/* Icônes d'action minimalistes en bas du message */}
+                    <AnimatePresence>
+                        {isHovered && type === 'assistant' && (
+                            <MessageActions 
+                                onCopy={handleCopy}
+                                onDelete={() => {}}
+                            />
+                        )}
+                    </AnimatePresence>
+                </div>
             </div>
         </motion.div>
     );
 };
+
 // Conteneur principal des messages
 const ChatContainer = ({ messages = [], isTyping }) => {
     const bottomRef = useRef(null);
