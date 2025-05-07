@@ -28,6 +28,9 @@ const AddDocuments = () => {
     const fileInputRef = useRef(null);
     const { user } = useAuth();
 
+    const [uploadMode, setUploadMode] = useState("single"); // "single" ou "zip"
+
+
     // Récupérer les collections
     useEffect(() => {
         const fetchCollections = async () => {
@@ -192,7 +195,21 @@ const AddDocuments = () => {
         formData.append('tags', JSON.stringify(tags));
 
         try {
-            const response = await fetch('http://127.0.0.1:5000/document/add', {
+
+            // URL différente selon le mode d'envoi
+            const endpoint = uploadMode === "zip"
+                ? 'http://127.0.0.1:5000/document/add_zip'
+                : 'http://127.0.0.1:5000/document/add';
+
+
+            // Pour le mode ZIP, renommer le champ du fichier
+            if (uploadMode === "zip") {
+                formData.delete('file');
+                formData.append('zip_file', selectedFile);
+            }
+
+
+            const response = await fetch(endpoint, {
                 method: 'POST',
                 body: formData
             });
@@ -503,6 +520,41 @@ const AddDocuments = () => {
                         </div>
                     )}
 
+                    <div className="flex flex-col gap-2 mb-4">
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Type d'envoi
+                        </label>
+                        <div className="flex space-x-4">
+                            <label className="flex items-center space-x-2 cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name="uploadMode"
+                                    value="single"
+                                    checked={uploadMode === "single"}
+                                    onChange={() => setUploadMode("single")}
+                                    className="text-indigo-600 focus:ring-indigo-500"
+                                />
+                                <span className="text-sm text-gray-700 dark:text-gray-300">Document unique</span>
+                            </label>
+                            <label className="flex items-center space-x-2 cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name="uploadMode"
+                                    value="zip"
+                                    checked={uploadMode === "zip"}
+                                    onChange={() => setUploadMode("zip")}
+                                    className="text-indigo-600 focus:ring-indigo-500"
+                                />
+                                <span className="text-sm text-gray-700 dark:text-gray-300">Archive ZIP (plusieurs PDF)</span>
+                            </label>
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                            {uploadMode === "zip"
+                                ? "L'archive ZIP doit contenir uniquement des fichiers PDF à traiter."
+                                : "Sélectionnez un seul document PDF à la fois."}
+                        </div>
+                    </div>
+
                     <div
                         onDragOver={handleDragOver}
                         onDragLeave={handleDragLeave}
@@ -547,20 +599,22 @@ const AddDocuments = () => {
                         )}
                         <input
                             type="file"
-                            accept=".pdf,.zip"
+                            accept={uploadMode === "zip" ? ".zip" : ".pdf"}
                             className="hidden"
                             id="file-upload"
                             ref={fileInputRef}
                             onChange={handleFileChange}
                         />
-                        
+
                         {!fileName && (
-                            <Button 
-                                variant="outline" 
+                            <Button
+                                variant="outline"
                                 onClick={() => fileInputRef.current.click()}
                                 className="border-indigo-300 text-indigo-600 hover:bg-indigo-50"
                             >
-                                Sélectionner un fichier
+                                {uploadMode === "zip"
+                                    ? "Sélectionner une archive ZIP"
+                                    : "Sélectionner un document PDF"}
                             </Button>
                         )}
                     </div>
@@ -581,7 +635,9 @@ const AddDocuments = () => {
                         ) : (
                             <>
                                 <Upload className="mr-2 h-5 w-5" />
-                                Envoyer le document
+                                {uploadMode === "zip"
+                                    ? "Envoyer l'archive ZIP"
+                                    : "Envoyer le document"}
                             </>
                         )}
                     </Button>
