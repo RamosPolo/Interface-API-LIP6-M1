@@ -474,7 +474,7 @@ const ChatMessage = ({ message, type, timestamp, index, isLast, totalMessages })
                     
                     {/* Icônes d'action minimalistes en bas du message */}
                     <AnimatePresence>
-                        {isHovered && type === 'assistant' && (
+                        {isHovered && (
                             <MessageActions 
                                 onCopy={handleCopy}
                                 onDelete={() => {}}
