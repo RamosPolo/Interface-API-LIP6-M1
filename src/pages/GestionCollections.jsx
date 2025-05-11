@@ -60,21 +60,14 @@ const GestionCollections = () => {
     useEffect(() => {
         const fetchCollections = async () => {
             try {
-                console.log("Tentative de récupération des collections...");
                 const response = await fetch("http://127.0.0.1:5000/collection/get");
-                console.log("Réponse reçue:", response);
                 const data = await response.json();
-                console.log("Données reçues:", data);
                 
                 if (response.ok) {
-                    console.log("Collections récupérées avec succès:", data.collections);
                     setCollections(data.collections || []);
 
                     if (!selectedCollection && data.collections && data.collections.length > 0) {
-                        console.log("Sélection de la première collection:", data.collections[0]);
                         setSelectedCollection(data.collections[0]);
-                    } else {
-                        console.log("Aucune collection à sélectionner ou déjà sélectionnée", selectedCollection);
                     }
                 } else {
                     console.error("Erreur lors de la récupération des collections, statut:", response.status);
