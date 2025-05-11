@@ -6,7 +6,7 @@ import { Upload, Plus, FileText, Database, Tag, Trash2, Check, AlertCircle, Sear
 import { useAuth } from "@/context/AuthContext.jsx";
 import { Select } from "@/components/ui/select";
 
-const AddDocuments = () => {
+const GestionCollections = () => {
     const [inputValue, setInputValue] = useState("");
     const [responseMessage, setResponseMessage] = useState("");
     const [responseStatus, setResponseStatus] = useState(null); // 'success' or 'error'
@@ -880,4 +880,4 @@ const AddDocuments = () => {
     );
 };
 
-export default AddDocuments;
+export default GestionCollections;

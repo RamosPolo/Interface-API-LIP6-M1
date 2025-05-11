@@ -1,14 +1,12 @@
 import React, { useState, createContext, useContext, useEffect } from "react";
 import Home from "@/pages/Home";
-import AddDocuments from "@/pages/AddDocuments";
+import GestionCollections from "@/pages/GestionCollections";
 import RagSettings from "@/pages/RagSettings";
-import History from "@/pages/History";
 import { Button } from "@/components/ui/button";
 import { 
     Home as HomeIcon, 
-    Upload, 
+    Database, 
     Settings, 
-    History as HistoryIcon, 
     LogOut,
     User
 } from "lucide-react";
@@ -69,15 +67,15 @@ const MainApp = () => {
     } else {
         menuItems.push(
             { id: "home", label: "Accueil", icon: HomeIcon },
-            { id: "add-documents", label: "Ajouter des documents", icon: Upload },
+            { id: "gestion-collections", label: "Gestion des collections", icon: Database },
             { id: "rag-settings", label: "Paramètres du RAG", icon: Settings }
         );
     }
 
     const renderView = () => {
         switch (view) {
-            case "add-documents":
-                return <AddDocuments />;
+            case "gestion-collections":
+                return <GestionCollections />;
             case "rag-settings":
                 return <RagSettings />;
             default:
