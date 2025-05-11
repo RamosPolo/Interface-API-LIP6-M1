@@ -649,7 +649,7 @@ const DropzoneAnimation = ({ isDragging, children, onDragOver, onDragLeave, onDr
 const SuccessAnimation = ({ onComplete }) => {
   return (
     <motion.div 
-      className="fixed inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm z-50"
+      className="fixed inset-0 h-full w-full flex items-center justify-center bg-black/20 backdrop-blur-sm z-50"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -777,7 +777,7 @@ const DeleteConfirmation = ({ onCancel, onConfirm, itemName = "ce document" }) =
 const UploadingAnimation = ({ progress = 0, fileName }) => {
   return (
     <motion.div 
-      className="fixed inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm z-50"
+      className="fixed inset-0 h-full w-full flex items-center justify-center bg-black/20 backdrop-blur-sm z-50"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
