@@ -35,38 +35,7 @@ export const AuthProvider = ({ children }) => {
         setError(null);
         setIsLoading(true);
         
-        try {
-            // Connexion avec admin/admin pour le développement
-            if (email === "admin" && password === "admin") {
-                // Simulation d'une connexion réussie avec des droits d'admin
-                const mockUser = { 
-                    email: "admin",
-                    id: "admin_id",
-                    role: "admin"
-                };
-                
-                const mockParameters = {
-                    llm_model: "gpt-4",
-                    available_llm_models: ["gpt-3.5-turbo", "gpt-4", "claude-3"],
-                    split_chunk_size: 1000,
-                    split_chunk_overlap: 200,
-                    similarity_treshold: 0.75,
-                    k: 5,
-                    prompt_template: "Utilise les informations suivantes pour répondre à la question de l'utilisateur.\n\nContexte:\n{context}\n\nQuestion: {question}\n\nRéponse:"
-                };
-                
-                setIsAuthenticated(true);
-                setUser(mockUser);
-                setUserParameters(mockParameters);
-                
-                localStorage.setItem("isAuthenticated", "true");
-                localStorage.setItem("user", JSON.stringify(mockUser));
-                localStorage.setItem("userParameters", JSON.stringify(mockParameters));
-                
-                setIsLoading(false);
-                return;
-            }
-            
+        try {      
             // Requête normale à l'API
             const response = await fetch("http://localhost:5000/login", {
                 method: "POST",
