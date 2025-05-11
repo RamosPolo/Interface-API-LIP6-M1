@@ -176,7 +176,7 @@ const RagSettings = () => {
     };
 
     return (
-        <div className="max-w-5xl mx-auto space-y-6">
+        <div className="flex flex-col space-y-8 max-w-screen-xl h-screen max-h-screen mx-auto p-8 overflow-auto">
             {/* Notification */}
             {notification.message && (
                 <div className={`
