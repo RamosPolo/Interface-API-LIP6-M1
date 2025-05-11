@@ -146,13 +146,6 @@ const Login = () => {
                         </Button>
                     </form>
 
-                    <div className="mt-8 border-t border-gray-200 dark:border-gray-700 pt-6">
-                        <div className="text-center text-gray-600 dark:text-gray-400 mb-4">
-                            <p className="text-sm">Pour les tests, vous pouvez utiliser :</p>
-                            <p className="text-sm font-medium">Identifiant : admin | Mot de passe : admin</p>
-                        </div>
-                    </div>
-
                     <div className="mt-4 text-center">
                         <p className="text-xs text-gray-500 dark:text-gray-400">
                             © 2025 RAG Assistant. Tous droits réservés.
