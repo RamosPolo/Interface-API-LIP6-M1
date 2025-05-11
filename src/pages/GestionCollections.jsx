@@ -5,11 +5,43 @@ import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Upload, Plus, FileText, Database, Tag, Trash2, Check, AlertCircle, Search } from "lucide-react";
 import { useAuth } from "@/context/AuthContext.jsx";
 import { Select } from "@/components/ui/select";
+import { motion, AnimatePresence } from "framer-motion";
+
+import {
+    // Animations de base pour le chat
+    TypingAnimation,
+    ThinkingAnimation,
+    TypeIndicator,
+    MessageActions,
+    WelcomeMessage,
+    EmptyState,
+    
+    // Animations pour les tags
+    TagAnimations,
+    AnimatedTagsList,
+    AnimatedTagInput,
+    TagFeedback,
+    
+    // Animations pour les documents
+    DocumentAnimation,
+    NotificationAnimation,
+    FileUploadAnimation,
+    DropzoneAnimation,
+    SuccessAnimation, 
+    DeleteConfirmation,
+    UploadingAnimation,
+    AnimatedUploadButton,
+    
+    // États vides
+    EmptyDocumentsState,
+    EmptyTagsState
+  } from "@/components/Animations";
 
 const GestionCollections = () => {
+    // États existants
     const [inputValue, setInputValue] = useState("");
     const [responseMessage, setResponseMessage] = useState("");
-    const [responseStatus, setResponseStatus] = useState(null); // 'success' or 'error'
+    const [responseStatus, setResponseStatus] = useState(null);
     const [isDragging, setIsDragging] = useState(false);
     const [fileName, setFileName] = useState("");
     const [selectedFile, setSelectedFile] = useState(null);
@@ -25,29 +57,45 @@ const GestionCollections = () => {
     const [isUploading, setIsUploading] = useState(false);
     const [isCreatingCollection, setIsCreatingCollection] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
+    const [uploadMode, setUploadMode] = useState("single");
+    
+    // Nouveaux états pour les animations
+    const [showUploadProgress, setShowUploadProgress] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+    const [documentToDelete, setDocumentToDelete] = useState(null);
+    const [showTagFeedback, setShowTagFeedback] = useState(false);
+    const [lastAddedTag, setLastAddedTag] = useState("");
+    
     const fileInputRef = useRef(null);
     const { user } = useAuth();
-
-    const [uploadMode, setUploadMode] = useState("single"); // "single" ou "zip"
-
 
     // Récupérer les collections
     useEffect(() => {
         const fetchCollections = async () => {
             try {
+                console.log("Tentative de récupération des collections...");
                 const response = await fetch("http://127.0.0.1:5000/collection/get");
+                console.log("Réponse reçue:", response);
                 const data = await response.json();
+                console.log("Données reçues:", data);
+                
                 if (response.ok) {
+                    console.log("Collections récupérées avec succès:", data.collections);
                     setCollections(data.collections || []);
 
-                    if (!selectedCollection && data.collections.length > 0) {
+                    if (!selectedCollection && data.collections && data.collections.length > 0) {
+                        console.log("Sélection de la première collection:", data.collections[0]);
                         setSelectedCollection(data.collections[0]);
+                    } else {
+                        console.log("Aucune collection à sélectionner ou déjà sélectionnée", selectedCollection);
                     }
                 } else {
-                    console.error("Erreur lors de la récupération des collections");
+                    console.error("Erreur lors de la récupération des collections, statut:", response.status);
                 }
             } catch (error) {
-                console.error("Erreur de réseau :", error);
+                console.error("Erreur de réseau lors de la récupération des collections:", error);
             }
         };
 
@@ -114,6 +162,13 @@ const GestionCollections = () => {
         fetchDocuments();
     }, [selectedCollectionForList]);
 
+    // Fonction pour fermer les notifications
+    const closeNotification = () => {
+        setResponseMessage("");
+        setResponseStatus(null);
+    };
+
+    // Version améliorée de handlePostRequest
     const handlePostRequest = async () => {
         if (!inputValue.trim()) return;
         
@@ -155,6 +210,36 @@ const GestionCollections = () => {
         }
     };
 
+    // Gestion améliorée des tags
+    const addTag = (value) => {
+        const trimmed = value.trim();
+        if (trimmed && !tags.includes(trimmed)) {
+            setTags([...tags, trimmed]);
+            setInput("");
+            
+            // Afficher le feedback visuel
+            setLastAddedTag(trimmed);
+            setShowTagFeedback(true);
+            
+            // Masquer après 3 secondes
+            setTimeout(() => {
+                setShowTagFeedback(false);
+            }, 3000);
+        }
+    };
+    
+    const handleKeyDown = (e) => {
+        if (["Enter", ",", "Tab"].includes(e.key)) {
+            e.preventDefault();
+            addTag(input);
+        }
+    };
+
+    const removeTag = (tagToRemove) => {
+        setTags(tags.filter((tag) => tag !== tagToRemove));
+    };
+
+    // Version améliorée de handleDragOver
     const handleDragOver = (e) => {
         e.preventDefault();
         setIsDragging(true);
@@ -165,6 +250,7 @@ const GestionCollections = () => {
         setIsDragging(false);
     };
 
+    // Version améliorée du dépôt de fichier
     const handleDrop = (e) => {
         e.preventDefault();
         setIsDragging(false);
@@ -172,6 +258,15 @@ const GestionCollections = () => {
         if (files.length > 0) {
             setFileName(files[0].name);
             setSelectedFile(files[0]);
+            
+            // Petit délai pour montrer l'animation
+            setResponseMessage(`Fichier "${files[0].name}" prêt à être envoyé`);
+            setResponseStatus('success');
+            
+            setTimeout(() => {
+                setResponseMessage("");
+                setResponseStatus(null);
+            }, 3000);
         }
     };
 
@@ -180,13 +275,25 @@ const GestionCollections = () => {
         if (files.length > 0) {
             setFileName(files[0].name);
             setSelectedFile(files[0]);
+            
+            // Feedback visuel
+            setResponseMessage(`Fichier "${files[0].name}" sélectionné`);
+            setResponseStatus('success');
+            
+            setTimeout(() => {
+                setResponseMessage("");
+                setResponseStatus(null);
+            }, 3000);
         }
     };
 
+    // Version améliorée du téléchargement avec animation de progression
     const handleUpload = async () => {
         if (!selectedFile || !selectedCollection) return;
         
         setIsUploading(true);
+        setShowUploadProgress(true);
+        setUploadProgress(0);
 
         const formData = new FormData();
         formData.append('file', selectedFile);
@@ -195,12 +302,21 @@ const GestionCollections = () => {
         formData.append('tags', JSON.stringify(tags));
 
         try {
+            // Simuler la progression pour montrer l'animation
+            const progressInterval = setInterval(() => {
+                setUploadProgress(prev => {
+                    if (prev >= 95) {
+                        clearInterval(progressInterval);
+                        return 95;
+                    }
+                    return prev + Math.floor(Math.random() * 10) + 1;
+                });
+            }, 300);
 
             // URL différente selon le mode d'envoi
             const endpoint = uploadMode === "zip"
                 ? 'http://127.0.0.1:5000/document/add_zip'
                 : 'http://127.0.0.1:5000/document/add';
-
 
             // Pour le mode ZIP, renommer le champ du fichier
             if (uploadMode === "zip") {
@@ -208,23 +324,28 @@ const GestionCollections = () => {
                 formData.append('zip_file', selectedFile);
             }
 
-
             const response = await fetch(endpoint, {
                 method: 'POST',
                 body: formData
             });
 
+            clearInterval(progressInterval);
+            setUploadProgress(100);
+            
+            // Attendre un peu pour montrer la progression à 100%
+            await new Promise(resolve => setTimeout(resolve, 500));
+
             const data = await response.json();
             if (response.ok) {
+                setShowUploadProgress(false);
+                setShowSuccessModal(true);
+                
+                // Nettoyer les états
                 setFileName("");
                 setSelectedFile(null);
                 setTags([]);
-                setDocumentsByTag([]);
-                setDbTags([]);
-
-                setResponseMessage("Document ajouté avec succès");
-                setResponseStatus('success');
-
+                
+                // Rafraîchir les données
                 if (selectedCollectionForList === selectedCollection) {
                     const refreshedDocumentsResponse = await fetch(`http://127.0.0.1:5000/document/get?collection=${selectedCollection}`);
                     if (refreshedDocumentsResponse.ok) {
@@ -232,25 +353,18 @@ const GestionCollections = () => {
                         setDocuments(refreshedDocuments.documents || []);
                     }
                 }
-
-                const refreshedByTagResponse = await fetch(`http://127.0.0.1:5000/document/get_by_tag?tag=${selectedTag}`);
-                if (refreshedByTagResponse.ok) {
-                    const refreshedByTagData = await refreshedByTagResponse.json();
-                    setDocumentsByTag(refreshedByTagData.documents || []);
-                }
-
-                const refreshedTagsResponse = await fetch(`http://127.0.0.1:5000/document/get_tags`);
-                if (refreshedTagsResponse.ok) {
-                    const refreshedTagsData = await refreshedTagsResponse.json();
-                    setDbTags(refreshedTagsData.tags || []);
-                }
+                
+                // Rafraîchir les autres données
+                await refreshData();
             }
             else {
+                setShowUploadProgress(false);
                 setResponseMessage(`Erreur: ${data.error}`);
                 setResponseStatus('error');
             }
         } catch (error) {
             console.error("Erreur lors de l'envoi du fichier:", error);
+            setShowUploadProgress(false);
             setResponseMessage("Erreur lors de l'envoi du fichier");
             setResponseStatus('error');
         } finally {
@@ -258,46 +372,17 @@ const GestionCollections = () => {
         }
     };
 
-    const addTag = (value) => {
-        const trimmed = value.trim();
-        if (trimmed && !tags.includes(trimmed)) {
-          setTags([...tags, trimmed]);
-        }
-      };
-    
-    const handleKeyDown = (e) => {
-    if (["Enter", ",", "Tab"].includes(e.key)) {
-        e.preventDefault();
-        addTag(input);
-        setInput("");
-    }
+    // Version améliorée de la suppression avec confirmation
+    const handleDeleteClick = (source, collection) => {
+        setDocumentToDelete({ source, collection });
+        setShowDeleteConfirmation(true);
     };
-
-    const removeTag = (tagToRemove) => {
-    setTags(tags.filter((tag) => tag !== tagToRemove));
-    };
-
-    // Filtrer les documents en fonction du terme de recherche
-    const filteredDocuments = documents.filter(doc => 
-        doc.file_name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        (doc.tag && doc.tag.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
-
-    const handleViewPdf = (source) => {
-        const url = `http://127.0.0.1:5000/document/download?source=${source}`;
-        window.open(url, "_blank");
-    };
-      
-    const handleDelete = async (source, collection) => {
-        if (!source || !collection) {
-            console.error("Source et collection requis.");
-            return;
-        }
     
-        const confirmed = window.confirm("Voulez-vous vraiment supprimer ce document ?");
-        if (!confirmed) return;
-    
+    const handleDeleteConfirm = async () => {
+        if (!documentToDelete) return;
+        
         try {
+            const { source, collection } = documentToDelete;
             const params = new URLSearchParams({ source, collection });
             const response = await fetch(`http://127.0.0.1:5000/document/delete?${params.toString()}`, {
                 method: "DELETE",
@@ -308,41 +393,62 @@ const GestionCollections = () => {
             if (response.ok) {
                 setResponseMessage("Document supprimé avec succès.");
                 setResponseStatus("success");
-
-                setDocuments([]);
-                setDocumentsByTag([]);
-                setDbTags([]);
-
-                setResponseMessage("Document ajouté avec succès");
-                setResponseStatus('success');
-
-                if (selectedCollectionForList === selectedCollection) {
-                    const refreshedDocumentsResponse = await fetch(`http://127.0.0.1:5000/document/get?collection=${selectedCollection}`);
-                    if (refreshedDocumentsResponse.ok) {
-                        const refreshedDocuments = await refreshedDocumentsResponse.json();
-                        setDocuments(refreshedDocuments.documents || []);
-                    }
-                }
-
-                const refreshedByTagResponse = await fetch(`http://127.0.0.1:5000/document/get_by_tag?tag=${selectedTag}`);
-                if (refreshedByTagResponse.ok) {
-                    const refreshedByTagData = await refreshedByTagResponse.json();
-                    setDocumentsByTag(refreshedByTagData.documents || []);
-                }
-
-                const refreshedTagsResponse = await fetch(`http://127.0.0.1:5000/document/get_tags`);
-                if (refreshedTagsResponse.ok) {
-                    const refreshedTagsData = await refreshedTagsResponse.json();
-                    setDbTags(refreshedTagsData.tags || []);
-
-                    if (!refreshedTagsData.tags || refreshedTagsData.tags.length === 0 || !refreshedTagsData.tags.includes(selectedTag)) {
-                        setSelectedTag("");
-                    }
-                }
+                
+                // Rafraîchir les données
+                await refreshData();
             } else {
                 setResponseMessage(`Erreur: ${data.error}`);
                 setResponseStatus("error");
-                console.error("Erreur lors de la suppression :", data.error);
+            }
+        } catch (error) {
+            console.error("Erreur réseau :", error);
+            setResponseMessage("Erreur lors de la suppression.");
+            setResponseStatus("error");
+        } finally {
+            setShowDeleteConfirmation(false);
+            setDocumentToDelete(null);
+        }
+    };
+    
+    const handleDeleteCancel = () => {
+        setShowDeleteConfirmation(false);
+        setDocumentToDelete(null);
+    };
+
+    // Fonction pour visualiser un PDF
+    const handleViewPdf = (source) => {
+        // URL de l'API qui sert les fichiers PDF
+        const pdfUrl = `http://127.0.0.1:5000/document/view?source=${encodeURIComponent(source)}`;
+        
+        // Ouvrir le PDF dans un nouvel onglet
+        window.open(pdfUrl, "_blank");
+    };
+
+    // Fonction pour supprimer tous les documents avec un tag spécifique
+    const handleDeleteAllByTag = async () => {
+        if (!selectedTag) return;
+        
+        try {
+            const confirmDelete = window.confirm(`Êtes-vous sûr de vouloir supprimer tous les documents avec le tag "${selectedTag}" ? Cette action ne peut pas être annulée.`);
+            
+            if (confirmDelete) {
+                const response = await fetch(`http://127.0.0.1:5000/document/delete_by_tag?tag=${encodeURIComponent(selectedTag)}`, {
+                    method: "DELETE",
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    setResponseMessage(`Tous les documents avec le tag "${selectedTag}" ont été supprimés.`);
+                    setResponseStatus("success");
+                    setSelectedTag("");
+                    
+                    // Rafraîchir les données
+                    await refreshData();
+                } else {
+                    setResponseMessage(`Erreur: ${data.error}`);
+                    setResponseStatus("error");
+                }
             }
         } catch (error) {
             console.error("Erreur réseau :", error);
@@ -350,73 +456,87 @@ const GestionCollections = () => {
             setResponseStatus("error");
         }
     };
-    
-    const handleDeleteAllByTag = async () => {
-        if (!selectedTag) return;
-    
-        const confirmed = window.confirm("Voulez-vous vraiment supprimer ce tag et l'ensemble de ses documents associés ?");
-        if (!confirmed) return;
 
-        try {
-          const response = await fetch(`http://127.0.0.1:5000/document/delete_by_tag?tag=${selectedTag}`, {
-            method: "DELETE",
-          });
-    
-          if (response.ok) {
-            setDocuments([]);
-            setDocumentsByTag([]);
-            setDbTags([]);
-
-            setResponseMessage("Document ajouté avec succès");
-            setResponseStatus('success');
-
-            if (selectedCollectionForList === selectedCollection) {
-                const refreshedDocumentsResponse = await fetch(`http://127.0.0.1:5000/document/get?collection=${selectedCollection}`);
-                if (refreshedDocumentsResponse.ok) {
-                    const refreshedDocuments = await refreshedDocumentsResponse.json();
-                    setDocuments(refreshedDocuments.documents || []);
-                }
+    // Fonction utilitaire pour rafraîchir les données
+    const refreshData = async () => {
+        // Rafraîchir les documents par collection
+        if (selectedCollectionForList) {
+            const documentsResponse = await fetch(`http://127.0.0.1:5000/document/get?collection=${selectedCollectionForList}`);
+            if (documentsResponse.ok) {
+                const documentsData = await documentsResponse.json();
+                setDocuments(documentsData.documents || []);
             }
-
-            const refreshedByTagResponse = await fetch(`http://127.0.0.1:5000/document/get_by_tag?tag=${selectedTag}`);
-            if (refreshedByTagResponse.ok) {
-                const refreshedByTagData = await refreshedByTagResponse.json();
-                setDocumentsByTag(refreshedByTagData.documents || []);
+        }
+        
+        // Rafraîchir les documents par tag
+        if (selectedTag) {
+            const tagDocumentsResponse = await fetch(`http://127.0.0.1:5000/document/get_by_tag?tag=${selectedTag}`);
+            if (tagDocumentsResponse.ok) {
+                const tagDocumentsData = await tagDocumentsResponse.json();
+                setDocumentsByTag(tagDocumentsData.documents || []);
             }
-
-            const refreshedTagsResponse = await fetch(`http://127.0.0.1:5000/document/get_tags`);
-            if (refreshedTagsResponse.ok) {
-                const refreshedTagsData = await refreshedTagsResponse.json();
-                setDbTags(refreshedTagsData.tags || []);
-
-                if (!refreshedTagsData.tags || refreshedTagsData.tags.length === 0 || !refreshedTagsData.tags.includes(selectedTag)) {
-                    setSelectedTag("");
-                }
+        }
+        
+        // Rafraîchir la liste des tags
+        const tagsResponse = await fetch(`http://127.0.0.1:5000/document/get_tags`);
+        if (tagsResponse.ok) {
+            const tagsData = await tagsResponse.json();
+            setDbTags(tagsData.tags || []);
+            
+            // Vérifier si le tag sélectionné existe encore
+            if (selectedTag && (!tagsData.tags || !tagsData.tags.includes(selectedTag))) {
+                setSelectedTag("");
             }
-
-          } else {
-            console.error("Erreur lors de la suppression des documents par tag");
-          }
-        } catch (error) {
-          console.error("Erreur lors de la suppression groupée:", error);
         }
     };
 
+    // Filtrer les documents en fonction du terme de recherche
+    const filteredDocuments = documents.filter(doc => 
+        doc.file_name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        (doc.tags && doc.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())))
+    );
+
     return (
         <div className="flex flex-col space-y-8 max-w-screen-xl h-screen max-h-screen mx-auto p-8 overflow-auto">
-            {/* Message de notification */}
-            {responseMessage && (
-                <div className={`
-                    fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg flex items-center gap-3
-                    ${responseStatus === 'success' ? 'bg-green-100 text-green-800 border-l-4 border-green-500' : 
-                      responseStatus === 'error' ? 'bg-red-100 text-red-800 border-l-4 border-red-500' : 'bg-blue-100 text-blue-800 border-l-4 border-blue-500'}
-                    transition-all duration-500 ease-in-out
-                `}>
-                    {responseStatus === 'success' ? <Check className="h-5 w-5" /> : <AlertCircle className="h-5 w-5" />}
-                    <p>{responseMessage}</p>
-                </div>
-            )}
+            {/* Notification */}
+            <NotificationAnimation 
+                responseMessage={responseMessage} 
+                responseStatus={responseStatus} 
+                onClose={closeNotification}
+            />
+            
+            {/* Animations modales */}
+            <AnimatePresence>
+                {showUploadProgress && (
+                    <UploadingAnimation 
+                        progress={uploadProgress} 
+                        fileName={fileName} 
+                    />
+                )}
+                
+                {showSuccessModal && (
+                    <SuccessAnimation 
+                        onComplete={() => setShowSuccessModal(false)} 
+                    />
+                )}
+                
+                {showDeleteConfirmation && (
+                    <DeleteConfirmation 
+                        onCancel={handleDeleteCancel}
+                        onConfirm={handleDeleteConfirm}
+                        itemName={documentToDelete?.file_name || "ce document"}
+                    />
+                )}
+                
+                {showTagFeedback && (
+                    <TagFeedback 
+                        tag={lastAddedTag} 
+                        onComplete={() => setShowTagFeedback(false)} 
+                    />
+                )}
+            </AnimatePresence>
 
+            {/* Premier Card - Créer une collection */}
             <Card className="shadow-md">
                 <CardHeader className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-t-lg pb-4">
                     <div className="flex items-center gap-3">
@@ -436,31 +556,34 @@ const GestionCollections = () => {
                                 placeholder="Entrez le nom de la collection..."
                                 className="flex-grow shadow-sm"
                             />
-                            <Button 
-                                onClick={handlePostRequest} 
-                                disabled={!inputValue.trim() || isCreatingCollection}
-                                className="bg-indigo-600 hover:bg-indigo-700 text-white"
-                            >
-                                {isCreatingCollection ? (
-                                    <span className="flex items-center">
-                                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                        </svg>
-                                        Création...
-                                    </span>
-                                ) : (
-                                    <>
-                                        <Plus className="h-5 w-5 mr-1" />
-                                        Créer
-                                    </>
-                                )}
-                            </Button>
+                            <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+                                <Button 
+                                    onClick={handlePostRequest} 
+                                    disabled={!inputValue.trim() || isCreatingCollection}
+                                    className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                                >
+                                    {isCreatingCollection ? (
+                                        <span className="flex items-center">
+                                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                            Création...
+                                        </span>
+                                    ) : (
+                                        <>
+                                            <Plus className="h-5 w-5 mr-1" />
+                                            Créer
+                                        </>
+                                    )}
+                                </Button>
+                            </motion.div>
                         </div>
                     </div>
                 </CardContent>
             </Card>
 
+            {/* Deuxième Card - Déposer un document */}
             <Card className="shadow-md">
                 <CardHeader className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-t-lg pb-4">
                     <div className="flex items-center gap-3">
@@ -486,37 +609,30 @@ const GestionCollections = () => {
                         </div>
 
                         <div className="flex flex-col gap-2">
-                            <label htmlFor="collectionSelect" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            <label htmlFor="tagInput" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                                 Tags (Facultatif)
                             </label>
-                            <Input
-                                type="text"
+                            {/* Utiliser le composant AnimatedTagInput */}
+                            <AnimatedTagInput
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
                                 onKeyDown={handleKeyDown}
-                                placeholder="Ajoutez un tag et appuyez sur Entrée"
-                                className="w-full bg-transparent outline-none text-sm text-gray-800 dark:text-white"
+                                onAddTag={addTag}
                             />
                         </div>                 
                     </div>
 
+                    {/* Afficher les tags avec animation */}
                     {tags.length > 0 && (
                         <div className="mb-4">
-                            <h2 className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">
-                            Tags sélectionnés :
-                            </h2>
-                            <div className="flex flex-wrap gap-2">
-                            {tags.map((tag) => (
-                                <div
-                                    key={tag}
-                                    onClick={() => removeTag(tag)}
-                                    className="flex items-center gap-2 px-3 py-1 bg-indigo-100 dark:bg-indigo-400 text-indigo-400 dark:text-indigo-100 text-sm rounded-full transition-colors hover:bg-indigo-200 dark:hover:bg-indigo-500 cursor-pointer "
-                                >
-                                    <p>{tag}</p>
-                                    <p className="text-base leading-none flex items-center justify-center w-4 h-4">x</p>
-                                </div>                           
-                            ))}
-                            </div>
+                            <motion.h2 
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2"
+                            >
+                                Tags sélectionnés :
+                            </motion.h2>
+                            <TagAnimations tags={tags} removeTag={removeTag} />
                         </div>
                     )}
 
@@ -550,53 +666,27 @@ const GestionCollections = () => {
                         </div>
                         <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                             {uploadMode === "zip"
-                                ? "Sélectionnez une archive zip composée exclusivement de documents PDF."
-                                : "Sélectionnez un document PDF."}
+                                ? "L'archive ZIP doit contenir uniquement des fichiers PDF à traiter."
+                                : "Sélectionnez un seul document PDF à la fois."}
                         </div>
                     </div>
 
-                    <div
+                    {/* Zone de dépôt avec animation */}
+                    <DropzoneAnimation
+                        isDragging={isDragging}
                         onDragOver={handleDragOver}
                         onDragLeave={handleDragLeave}
                         onDrop={handleDrop}
-                        className={`
-                            border-2 border-dashed rounded-lg
-                            p-10 flex flex-col items-center justify-center
-                            transition-all duration-300
-                            ${isDragging 
-                                ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20' 
-                                : 'border-gray-300 dark:border-gray-700 hover:border-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-indigo-900/10'}
-                        `}
                     >
-                        <div className="mb-4 bg-indigo-100 dark:bg-indigo-900/30 rounded-full p-4">
-                            <Upload className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
-                        </div>
-                        {fileName ? (
-                            <div className="flex flex-col items-center">
-                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 text-center">
-                                    <span className="font-medium">{fileName}</span>
-                                </p>
-                                <Button 
-                                    variant="ghost" 
-                                    className="text-red-500 hover:text-red-600 p-1" 
-                                    onClick={() => {
-                                        setFileName("");
-                                        setSelectedFile(null);
-                                    }}
-                                >
-                                    <Trash2 className="h-4 w-4 mr-1" /> Supprimer
-                                </Button>
-                            </div>
-                        ) : (
-                            <>
-                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 text-center font-medium">
-                                    Glissez et déposez un fichier ici
-                                </p>
-                                <p className="text-xs text-gray-500 dark:text-gray-500 mb-4 text-center">
-                                    ou cliquez pour en sélectionner un
-                                </p>
-                            </>
-                        )}
+                        <FileUploadAnimation 
+                            fileName={fileName} 
+                            onRemove={() => {
+                                setFileName("");
+                                setSelectedFile(null);
+                            }} 
+                            fileInputRef={fileInputRef}
+                            uploadMode={uploadMode}
+                        />
                         <input
                             type="file"
                             accept={uploadMode === "zip" ? ".zip" : ".pdf"}
@@ -605,44 +695,19 @@ const GestionCollections = () => {
                             ref={fileInputRef}
                             onChange={handleFileChange}
                         />
-
-                        {!fileName && (
-                            <Button
-                                variant="outline"
-                                onClick={() => fileInputRef.current.click()}
-                                className="border-indigo-300 text-indigo-600 hover:bg-indigo-50"
-                            >
-                                {uploadMode === "zip"
-                                    ? "Sélectionner une archive ZIP"
-                                    : "Sélectionner un document PDF"}
-                            </Button>
-                        )}
-                    </div>
+                    </DropzoneAnimation>
                     
-                    <Button
+                    {/* Bouton d'envoi animé */}
+                    <AnimatedUploadButton
                         onClick={handleUpload}
-                        className="w-full bg-indigo-600 hover:bg-indigo-700 text-white shadow"
                         disabled={!selectedFile || !selectedCollection || isUploading}
-                    >
-                        {isUploading ? (
-                            <span className="flex items-center">
-                                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                Envoi en cours...
-                            </span>
-                        ) : (
-                            <>
-                                <Upload className="mr-2 h-5 w-5" />
-                                {uploadMode === "zip"
-                                    ? "Envoyer l'archive ZIP"
-                                    : "Envoyer le document"}
-                            </>
-                        )}
-                    </Button>
+                        isUploading={isUploading}
+                        uploadMode={uploadMode}
+                    />
                 </CardContent>
             </Card>
+
+            
 
             <Card className="shadow-md">
                 <CardHeader className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-t-lg pb-4">
