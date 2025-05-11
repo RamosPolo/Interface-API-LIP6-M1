@@ -65,8 +65,8 @@ export const AuthProvider = ({ children }) => {
     
                         if (paramsResponse.ok) {
                             const userParams = await paramsResponse.json();
-                            setUserParameters(userParams);
-                            localStorage.setItem("userParameters", JSON.stringify(userParams));
+                            setUserParameters(userParams.data);
+                            localStorage.setItem("userParameters", JSON.stringify(userParams.data));
                         } else {
                             throw new Error("Erreur lors de la récupération des paramètres");
                         }
