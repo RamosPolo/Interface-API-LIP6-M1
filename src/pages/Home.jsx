@@ -374,9 +374,26 @@ const MessageActions = ({ onCopy, onDelete }) => {
         </motion.div>
     );
 };
-// Composant de message avec animations
+import TypingAnimation from "@/components/ui/TypingAnimation"; 
+
+// Puis modifiez le composant ChatMessage comme suit:
 const ChatMessage = ({ message, type, timestamp, index, isLast, totalMessages }) => {
     const [isHovered, setIsHovered] = useState(false);
+    const [isTypingComplete, setIsTypingComplete] = useState(false);
+    const [startTyping, setStartTyping] = useState(false);
+    
+    useEffect(() => {
+        // Commencer l'animation après un court délai pour les nouveaux messages de l'assistant
+        if (type === 'assistant' && isLast) {
+            const timer = setTimeout(() => {
+                setStartTyping(true);
+            }, 300);
+            return () => clearTimeout(timer);
+        } else {
+            // Pour les anciens messages, montrer directement le texte
+            setIsTypingComplete(true);
+        }
+    }, [type, isLast]);
     
     // Pour les messages système
     const isSystemMessage = message.startsWith("**Système:**");
@@ -463,7 +480,14 @@ const ChatMessage = ({ message, type, timestamp, index, isLast, totalMessages })
                             delay: delay + 0.2
                         }}
                     >
-                        <p className="whitespace-pre-wrap">{message}</p>
+                        {type === 'assistant' && startTyping && !isTypingComplete ? (
+                            <TypingAnimation 
+                                text={message} 
+                                onComplete={() => setIsTypingComplete(true)} 
+                            />
+                        ) : (
+                            <p className="whitespace-pre-wrap">{message}</p>
+                        )}
                         
                         {timestamp && (
                             <div className="text-xs mt-2 opacity-70">
@@ -474,7 +498,7 @@ const ChatMessage = ({ message, type, timestamp, index, isLast, totalMessages })
                     
                     {/* Icônes d'action minimalistes en bas du message */}
                     <AnimatePresence>
-                        {isHovered && (
+                        {isHovered && isTypingComplete && (
                             <MessageActions 
                                 onCopy={handleCopy}
                                 onDelete={() => {}}
@@ -488,16 +512,26 @@ const ChatMessage = ({ message, type, timestamp, index, isLast, totalMessages })
 };
 
 // Conteneur principal des messages
+// Conteneur principal des messages
 const ChatContainer = ({ messages = [], isTyping }) => {
     const bottomRef = useRef(null);
     const containerRef = useRef(null);
     const [showWelcome, setShowWelcome] = useState(messages.length <= 1);
+    const [previousMessagesCount, setPreviousMessagesCount] = useState(messages.length);
+    
+    // Cette variable nous permet de savoir si un nouveau message vient d'être ajouté
+    const hasNewMessage = messages.length > previousMessagesCount;
     
     useEffect(() => {
+        // Mettre à jour le compteur de messages lorsque de nouveaux messages sont ajoutés
+        if (messages.length !== previousMessagesCount) {
+            setPreviousMessagesCount(messages.length);
+        }
+        
         if (bottomRef.current) {
             bottomRef.current.scrollIntoView({ behavior: 'smooth' });
         }
-    }, [messages, isTyping]);
+    }, [messages, isTyping, previousMessagesCount]);
     
     return (
         <div ref={containerRef} className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700 scrollbar-track-transparent relative">
@@ -509,7 +543,7 @@ const ChatContainer = ({ messages = [], isTyping }) => {
                 <div className="py-4">
                     {messages.map((msg, idx) => (
                         <ChatMessage 
-                            key={idx}
+                            key={`${idx}-${messages.length}`} // Utiliser un ID unique qui change quand de nouveaux messages sont ajoutés
                             message={msg.message}
                             type={msg.type}
                             timestamp={msg.timestamp}
@@ -835,7 +869,7 @@ const Home = () => {
 
     const handleSend = async () => {
         if (!newMessage.trim() || !selectedCollection || isLoading) return;
-
+    
         setIsLoading(true);
         const messageToSend = newMessage.trim();
         setNewMessage("");
@@ -863,12 +897,12 @@ const Home = () => {
         
         // Simuler la réponse en cours
         setIsTyping(true);
-
+    
         try {
             const query_text = encodeURIComponent(messageToSend);
             const user_id = user.id;
             const collection = selectedCollection;
-
+    
             // Attendre la réponse
             const response = await fetch(`http://127.0.0.1:5000/query`, {
                 method: 'POST',
@@ -877,13 +911,12 @@ const Home = () => {
                 },
                 body: JSON.stringify({ query_text, user_id, collection })
             });
-
+    
             const data = await response.json();
             
-            // Délai plus long pour permettre de voir l'animation de réflexion
-            // Entre 3 et 6 secondes selon la longueur de la réponse
-            const responseLength = data.response?.length || 0;
-            const thinkingTime = Math.min(3000 + (responseLength / 100), 6000);
+            // Délai pour montrer l'animation de réflexion
+            // Réduire légèrement le délai car nous aurons maintenant l'animation de frappe
+            const thinkingTime = Math.min(2000 + (data.response?.length / 300), 4000);
             
             setTimeout(() => {
                 setIsTyping(false);
