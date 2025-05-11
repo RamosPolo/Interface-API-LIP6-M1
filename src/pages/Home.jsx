@@ -580,147 +580,135 @@ const ChatSidebar = ({ chats = [], activeChat, onSelectChat, onNewChat, onDelete
     };
     
     const sidebarVariants = {
-        open: { 
-            x: 0,
-            transition: { 
-                type: "spring", 
-                stiffness: 300, 
-                damping: 30 
-            }
+        open: {
+            width: '18rem',
+            transition: { duration: 0.2, ease: 'easeInOut' }
         },
-        closed: { 
-            x: "100%",
-            transition: { 
-                type: "spring", 
-                stiffness: 300, 
-                damping: 30 
-            }
+        closed: {
+            width: '0rem',
+            transition: { duration: 0.2, ease: 'easeInOut' }
         }
     };
+
     
     return (
-        <AnimatePresence>
-            {visible && (
-                <motion.div
-                    className="fixed inset-y-0 right-0 w-72 bg-white dark:bg-gray-800 shadow-xl z-20 
-                              border-l border-gray-200 dark:border-gray-700 flex flex-col md:relative"
-                    initial="closed"
-                    animate="open"
-                    exit="closed"
-                    variants={sidebarVariants}
+            
+        <motion.div
+            className="fixed inset-y-0 right-0 bg-white dark:bg-gray-800 shadow-xl z-20 
+                        border-l border-gray-200 dark:border-gray-700 flex flex-col md:relative overflow-hidden"
+            variants={sidebarVariants}
+            animate={visible ? "open" : "closed"}
+            transition={{ duration: 0.2 }}
+        >
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex flex-col gap-4">
+                <div className="flex justify-between items-center">
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Conversations</h2>
+                    <button 
+                        className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 md:hidden"
+                        onClick={onClose}
+                    >
+                        <X size={20} className="text-gray-500" />
+                    </button>
+                </div>
+                
+                <motion.div 
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                 >
-                    <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex flex-col gap-4">
-                        <div className="flex justify-between items-center">
-                            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Conversations</h2>
-                            <button 
-                                className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 md:hidden"
-                                onClick={onClose}
-                            >
-                                <X size={20} className="text-gray-500" />
-                            </button>
-                        </div>
-                        
-                        <motion.div 
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                        >
-                            <Button
-                                onClick={onNewChat}
-                                className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white py-2 rounded-xl shadow-md transition-all duration-200 hover:shadow-lg"
-                            >
-                                <Plus className="w-5 h-5 mr-2" />
-                                Nouvelle conversation
-                            </Button>
-                        </motion.div>
-                        
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-                            <Input
-                                type="text"
-                                placeholder="Rechercher une conversation..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="bg-gray-100 dark:bg-gray-700 border-0"
-                            />
-                        </div>
-                    </div>
-                    
-                    <div className="flex-1 overflow-y-auto p-2 space-y-1">
-                        <AnimatePresence>
-                            {filteredChats.length > 0 ? (
-                                filteredChats.map((chat, idx) => (
-                                    <motion.button
-                                        key={chat.id}
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, x: 20 }}
-                                        transition={{ delay: idx * 0.05 }}
-                                        onClick={() => onSelectChat(chat.id)}
-                                        whileHover={{ scale: 1.02 }}
-                                        whileTap={{ scale: 0.98 }}
-                                        className={`
-                                            flex items-center justify-between w-full px-3 py-3 rounded-xl
-                                            group transition-all duration-200
-                                            ${activeChat === chat.id 
-                                                ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-900 dark:text-indigo-100' 
-                                                : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200'}
-                                        `}
-                                    >
-                                        <div className="flex items-center overflow-hidden">
-                                            <div className="flex-1 min-w-0 text-left">
-                                                <p className="font-medium truncate">{chat.title}</p>
-                                                <p className="text-xs truncate text-gray-500 dark:text-gray-400">
-                                                    {chat.messages.length > 0 
-                                                        ? chat.messages[chat.messages.length - 1].message.substring(0, 30) + "..." 
-                                                        : "Nouvelle conversation"}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        
-                                        <motion.button 
-                                            onClick={(e) => handleDeleteChat(e, chat.id)}
-                                            className="p-1 rounded-full text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 opacity-0 group-hover:opacity-100 transition-opacity"
-                                            whileHover={{ scale: 1.2 }}
-                                            whileTap={{ scale: 0.9 }}
-                                        >
-                                            <Trash2 size={16} />
-                                        </motion.button>
-                                    </motion.button>
-                                ))
-                            ) : (
-                                <motion.div 
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    transition={{ delay: 0.2 }}
-                                    className="text-center py-8"
-                                >
-                                    <motion.div
-                                        animate={{ 
-                                            y: [0, -10, 0],
-                                            opacity: [0.7, 1, 0.7]
-                                        }}
-                                        transition={{ 
-                                            repeat: Infinity,
-                                            duration: 3
-                                        }}
-                                    >
-                                        <MessageSquare className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-3" />
-                                    </motion.div>
-                                    <p className="text-gray-500 dark:text-gray-400">
-                                        {searchTerm 
-                                            ? "Aucune conversation trouvée" 
-                                            : "Aucune conversation"
-                                        }
-                                    </p>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-                    </div>
+                    <Button
+                        onClick={onNewChat}
+                        className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white py-2 rounded-xl shadow-md transition-all duration-200 hover:shadow-lg"
+                    >
+                        <Plus className="w-5 h-5 mr-2" />
+                        Nouvelle conversation
+                    </Button>
                 </motion.div>
-            )}
-        </AnimatePresence>
-    );
-};
+                
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                    <Input
+                        type="text"
+                        placeholder="Rechercher une conversation..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="bg-gray-100 dark:bg-gray-700 border-0"
+                    />
+                </div>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-2 space-y-1">
+                <AnimatePresence>
+                    {filteredChats.length > 0 ? (
+                        filteredChats.map((chat, idx) => (
+                            <motion.button
+                                key={chat.id}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, x: 20 }}
+                                transition={{ delay: idx * 0.05 }}
+                                onClick={() => onSelectChat(chat.id)}
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                className={`
+                                    flex items-center justify-between w-full px-3 py-3 rounded-xl
+                                    group transition-all duration-200
+                                    ${activeChat === chat.id 
+                                        ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-900 dark:text-indigo-100' 
+                                        : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200'}
+                                `}
+                            >
+                                <div className="flex items-center overflow-hidden">
+                                    <div className="flex-1 min-w-0 text-left">
+                                        <p className="font-medium truncate">{chat.title}</p>
+                                        <p className="text-xs truncate text-gray-500 dark:text-gray-400">
+                                            {chat.messages.length > 0 
+                                                ? chat.messages[chat.messages.length - 1].message.substring(0, 30) + "..." 
+                                                : "Nouvelle conversation"}
+                                        </p>
+                                    </div>
+                                </div>
+                                
+                                <motion.button 
+                                    onClick={(e) => handleDeleteChat(e, chat.id)}
+                                    className="p-1 rounded-full text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    whileHover={{ scale: 1.2 }}
+                                    whileTap={{ scale: 0.9 }}
+                                >
+                                    <Trash2 size={16} />
+                                </motion.button>
+                            </motion.button>
+                        ))
+                    ) : (
+                        <motion.div 
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 0.2 }}
+                            className="text-center py-8"
+                        >
+                            <motion.div
+                                animate={{ 
+                                    y: [0, -10, 0],
+                                    opacity: [0.7, 1, 0.7]
+                                }}
+                                transition={{ 
+                                    repeat: Infinity,
+                                    duration: 3
+                                }}
+                            >
+                                <MessageSquare className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-3" />
+                            </motion.div>
+                            <p className="text-gray-500 dark:text-gray-400">
+                                {searchTerm 
+                                    ? "Aucune conversation trouvée" 
+                                    : "Aucune conversation"
+                                }
+                            </p>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
+        </motion.div>
+    )}
 
 // Composant de saisie de message
 const MessageInput = ({ value, onChange, onSend, disabled, collections, selectedCollection, onCollectionChange }) => {
@@ -735,8 +723,8 @@ const MessageInput = ({ value, onChange, onSend, disabled, collections, selected
     }, [value]);
     
     return (
-        <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6">
-            <div className="max-w-4xl mx-auto">
+        <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-8">
+            <div className="max-w-full mx-auto">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
