@@ -680,7 +680,7 @@ const GestionCollections = () => {
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
                                         placeholder="Rechercher un document par son nom"
-                                        className="pl-9 shadow-sm"
+                                        className="shadow-sm"
                                     />
                                 </div>
                             </div>

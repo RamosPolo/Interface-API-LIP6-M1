@@ -640,7 +640,7 @@ const ChatSidebar = ({ chats = [], activeChat, onSelectChat, onNewChat, onDelete
                                 placeholder="Rechercher une conversation..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="pl-10 bg-gray-100 dark:bg-gray-700 border-0"
+                                className="bg-gray-100 dark:bg-gray-700 border-0"
                             />
                         </div>
                     </div>

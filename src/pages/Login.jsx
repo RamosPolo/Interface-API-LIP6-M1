@@ -98,7 +98,7 @@ const Login = () => {
                                         placeholder="Entrez votre identifiant"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
-                                        className="pl-10 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus:ring-indigo-500 focus:border-indigo-500"
+                                        className="bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus:ring-indigo-500 focus:border-indigo-500"
                                         disabled={isLoading}
                                     />
                                 </div>
@@ -117,7 +117,7 @@ const Login = () => {
                                         placeholder="Entrez votre mot de passe"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
-                                        className="pl-10 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus:ring-indigo-500 focus:border-indigo-500"
+                                        className="bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus:ring-indigo-500 focus:border-indigo-500"
                                         disabled={isLoading}
                                     />
                                 </div>
