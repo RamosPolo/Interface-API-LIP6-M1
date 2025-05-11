@@ -550,8 +550,8 @@ const AddDocuments = () => {
                         </div>
                         <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                             {uploadMode === "zip"
-                                ? "L'archive ZIP doit contenir uniquement des fichiers PDF à traiter."
-                                : "Sélectionnez un seul document PDF à la fois."}
+                                ? "Sélectionnez une archive zip composée exclusivement de documents PDF."
+                                : "Sélectionnez un document PDF."}
                         </div>
                     </div>
 
@@ -679,7 +679,7 @@ const AddDocuments = () => {
                                     <Input
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
-                                        placeholder="Rechercher par nom ou tag..."
+                                        placeholder="Rechercher un document par son nom"
                                         className="pl-9 shadow-sm"
                                     />
                                 </div>
