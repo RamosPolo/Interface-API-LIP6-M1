@@ -659,8 +659,8 @@ const ChatSidebar = ({ chats = [], activeChat, onSelectChat, onNewChat, onDelete
                             >
                                 <div className="flex items-center overflow-hidden">
                                     <div className="flex-1 min-w-0 text-left">
-                                        <p className="font-medium truncate">{chat.title}</p>
-                                        <p className="text-xs truncate text-gray-500 dark:text-gray-400">
+                                        <p className="font-bold truncate">{chat.title}</p>
+                                        <p className="text-xs truncate text-gray-200">
                                             {chat.messages.length > 0 
                                                 ? chat.messages[chat.messages.length - 1].message.substring(0, 30) + "..." 
                                                 : "Nouvelle conversation"}
@@ -668,14 +668,16 @@ const ChatSidebar = ({ chats = [], activeChat, onSelectChat, onNewChat, onDelete
                                     </div>
                                 </div>
                                 
-                                <motion.button 
+                                <motion.div 
                                     onClick={(e) => handleDeleteChat(e, chat.id)}
                                     className="p-1 rounded-full text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 opacity-0 group-hover:opacity-100 transition-opacity"
                                     whileHover={{ scale: 1.2 }}
                                     whileTap={{ scale: 0.9 }}
+                                    role="button"
+                                    tabIndex={0}
                                 >
                                     <Trash2 size={16} />
-                                </motion.button>
+                                </motion.div>
                             </motion.button>
                         ))
                     ) : (
