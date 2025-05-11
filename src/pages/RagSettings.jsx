@@ -99,12 +99,11 @@ const RagSettings = () => {
                     "Content-Type": "application/json",
                 },
             });
-            console.log("Response:", paramsResponse);
+
             if (paramsResponse.ok) {
                 const userParams = await paramsResponse.json();
                 setUserParameters(userParams.data);
                 localStorage.setItem("userParameters", JSON.stringify(userParams.data));
-                console.log("Paramètres récupérés :", userParams);
                 setResponseMessage(`${userParams.message}`);
                 setResponseStatus('success');
             }
@@ -131,7 +130,7 @@ const RagSettings = () => {
             user_id: user.id,
             parameters: { ...userParameters }
         };
-        console.log("Envoi des paramètres :", requestBody);
+
         setLoading(true);
         setResponseMessage("");
         setResponseStatus(null);
