@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
 import { useAuth } from "@/context/AuthContext.jsx";
+import { NotificationAnimation } from "@/components/Animations";
 
 const InfoTooltip = ({ text }) => (
     <div className="relative group">
@@ -75,7 +76,8 @@ const RagSettings = () => {
     const { user, userParameters, setUserParameters } = useAuth();
     const [hasChanges, setHasChanges] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [notification, setNotification] = useState({ message: '', type: null });
+    const [responseMessage, setResponseMessage] = useState("");
+    const [responseStatus, setResponseStatus] = useState(null);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const isAdmin = user?.role === "admin";
 
@@ -97,27 +99,18 @@ const RagSettings = () => {
                     "Content-Type": "application/json",
                 },
             });
-
+            console.log("Response:", paramsResponse);
             if (paramsResponse.ok) {
                 const userParams = await paramsResponse.json();
-                setUserParameters(userParams);
-                localStorage.setItem("userParameters", JSON.stringify(userParams));
-                
-                setNotification({
-                    message: "Paramètres rafraîchis avec succès",
-                    type: 'success'
-                });
-                
-                setTimeout(() => {
-                    setNotification({ message: '', type: null });
-                }, 3000);
+                setUserParameters(userParams.data);
+                localStorage.setItem("userParameters", JSON.stringify(userParams.data));
+                console.log("Paramètres récupérés :", userParams);
+                setResponseMessage(`${userParams.message}`);
+                setResponseStatus('success');
             }
         } catch (error) {
-            console.error("Erreur lors du rafraîchissement des paramètres:", error);
-            setNotification({
-                message: "Erreur lors du rafraîchissement des paramètres",
-                type: 'error'
-            });
+            setResponseMessage(`Erreur: ${error.message}`);
+            setResponseStatus('error');
         } finally {
             setIsRefreshing(false);
         }
@@ -138,9 +131,10 @@ const RagSettings = () => {
             user_id: user.id,
             parameters: { ...userParameters }
         };
-    
+        console.log("Envoi des paramètres :", requestBody);
         setLoading(true);
-        setNotification({ message: '', type: null });
+        setResponseMessage("");
+        setResponseStatus(null);
     
         try {
             const response = await fetch("http://127.0.0.1:5000/parameters/update", {
@@ -154,40 +148,36 @@ const RagSettings = () => {
                 console.error("Erreur serveur:", errorDetails);
                 throw new Error("Erreur lors de la sauvegarde des paramètres");
             }
-    
-            setHasChanges(false);
-            setNotification({
-                message: "Paramètres enregistrés avec succès",
-                type: 'success'
-            });
-            
-            setTimeout(() => {
-                setNotification({ message: '', type: null });
-            }, 3000);
-        } catch (err) {
-            console.error("Erreur lors de la sauvegarde :", err);
-            setNotification({
-                message: err.message || "Erreur lors de la sauvegarde",
-                type: 'error'
-            });
+
+            if (response.ok) {
+                const result = await response.json();
+                setResponseMessage(`${result.message}`);
+                setResponseStatus('success');
+                setHasChanges(false);
+            }
+
+        } catch (error) {
+            setResponseMessage(`Erreur: ${error.message}`);
+            setResponseStatus('error');
         } finally {
             setLoading(false);
         }
     };
 
+    // Fonction pour fermer les notifications
+    const closeNotification = () => {
+        setResponseMessage("");
+        setResponseStatus(null);
+    };
+
     return (
         <div className="flex flex-col space-y-8 max-w-screen-xl h-screen max-h-screen mx-auto p-8 overflow-auto">
             {/* Notification */}
-            {notification.message && (
-                <div className={`
-                    fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg flex items-center gap-3
-                    ${notification.type === 'success' ? 'bg-green-100 text-green-800 border-l-4 border-green-500' : 'bg-red-100 text-red-800 border-l-4 border-red-500'}
-                    transition-all duration-500 ease-in-out
-                `}>
-                    {notification.type === 'success' ? <Check className="h-5 w-5" /> : <AlertCircle className="h-5 w-5" />}
-                    <p>{notification.message}</p>
-                </div>
-            )}
+            <NotificationAnimation 
+                responseMessage={responseMessage} 
+                responseStatus={responseStatus}
+                onClose={closeNotification}
+            />
 
             <Card className="shadow-md hover:shadow-lg transition-shadow duration-300">
                 <CardHeader className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-t-lg">
