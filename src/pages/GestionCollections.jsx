@@ -2,28 +2,16 @@ import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
-import { Upload, Plus, FileText, Database, Tag, Trash2, Check, AlertCircle, Search } from "lucide-react";
+import { Upload, Plus, FileText, Database, Tag, Trash2, Search } from "lucide-react";
 import { useAuth } from "@/context/AuthContext.jsx";
 import { Select } from "@/components/ui/select";
 import { motion, AnimatePresence } from "framer-motion";
 
 import {
-    // Animations de base pour le chat
-    TypingAnimation,
-    ThinkingAnimation,
-    TypeIndicator,
-    MessageActions,
-    WelcomeMessage,
-    EmptyState,
-    
     // Animations pour les tags
     TagAnimations,
-    AnimatedTagsList,
-    AnimatedTagInput,
-    TagFeedback,
     
     // Animations pour les documents
-    DocumentAnimation,
     NotificationAnimation,
     FileUploadAnimation,
     DropzoneAnimation,
@@ -31,10 +19,6 @@ import {
     DeleteConfirmation,
     UploadingAnimation,
     AnimatedUploadButton,
-    
-    // États vides
-    EmptyDocumentsState,
-    EmptyTagsState
   } from "@/components/Animations";
 
 const GestionCollections = () => {
@@ -63,7 +47,8 @@ const GestionCollections = () => {
     const [showUploadProgress, setShowUploadProgress] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
-    const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+    const [showDeleteDocumentConfirmation, setShowDeleteDocumentConfirmation] = useState(false);
+    const [showDeleteTagConfirmation, setShowDeleteTagConfirmation] = useState(false);
     const [documentToDelete, setDocumentToDelete] = useState(null);
     const [showTagFeedback, setShowTagFeedback] = useState(false);
     const [lastAddedTag, setLastAddedTag] = useState("");
@@ -372,13 +357,16 @@ const GestionCollections = () => {
         }
     };
 
-    // Version améliorée de la suppression avec confirmation
-    const handleDeleteClick = (source, collection) => {
+    const handleDeleteDocumentClick = (source, collection) => {
         setDocumentToDelete({ source, collection });
-        setShowDeleteConfirmation(true);
+        setShowDeleteDocumentConfirmation(true);
+    };
+
+    const handleDeleteTagClick = () => {
+        setShowDeleteTagConfirmation(true);
     };
     
-    const handleDeleteConfirm = async () => {
+    const handleDocumentDeleteConfirm = async () => {
         if (!documentToDelete) return;
         
         try {
@@ -405,34 +393,21 @@ const GestionCollections = () => {
             setResponseMessage("Erreur lors de la suppression.");
             setResponseStatus("error");
         } finally {
-            setShowDeleteConfirmation(false);
+            setShowDeleteDocumentConfirmation(false);
             setDocumentToDelete(null);
         }
     };
     
-    const handleDeleteCancel = () => {
-        setShowDeleteConfirmation(false);
+    const handleDocumentDeleteCancel = () => {
+        setShowDeleteDocumentConfirmation(false);
         setDocumentToDelete(null);
     };
 
-    // Fonction pour visualiser un PDF
-    const handleViewPdf = (source) => {
-        // URL de l'API qui sert les fichiers PDF
-        const pdfUrl = `http://127.0.0.1:5000/document/view?source=${encodeURIComponent(source)}`;
-        
-        // Ouvrir le PDF dans un nouvel onglet
-        window.open(pdfUrl, "_blank");
-    };
-
-    // Fonction pour supprimer tous les documents avec un tag spécifique
-    const handleDeleteAllByTag = async () => {
+    const handleTagDeleteConfirm = async () => {
         if (!selectedTag) return;
         
         try {
-            const confirmDelete = window.confirm(`Êtes-vous sûr de vouloir supprimer tous les documents avec le tag "${selectedTag}" ? Cette action ne peut pas être annulée.`);
-            
-            if (confirmDelete) {
-                const response = await fetch(`http://127.0.0.1:5000/document/delete_by_tag?tag=${encodeURIComponent(selectedTag)}`, {
+            const response = await fetch(`http://127.0.0.1:5000/document/delete_by_tag?tag=${encodeURIComponent(selectedTag)}`, {
                     method: "DELETE",
                 });
                 
@@ -441,20 +416,33 @@ const GestionCollections = () => {
                 if (response.ok) {
                     setResponseMessage(`Tous les documents avec le tag "${selectedTag}" ont été supprimés.`);
                     setResponseStatus("success");
-                    setSelectedTag("");
                     
-                    // Rafraîchir les données
                     await refreshData();
                 } else {
                     setResponseMessage(`Erreur: ${data.error}`);
                     setResponseStatus("error");
                 }
-            }
         } catch (error) {
             console.error("Erreur réseau :", error);
             setResponseMessage("Erreur lors de la suppression.");
             setResponseStatus("error");
+        } finally {
+            setShowDeleteTagConfirmation(false);
+            setSelectedTag(null);
         }
+    };
+    
+    const handleTagDeleteCancel = () => {
+        setShowDeleteTagConfirmation(false);
+    };
+
+    // Fonction pour visualiser un PDF
+    const handleViewPdf = (source) => {
+        // URL de l'API qui sert les fichiers PDF
+        const pdfUrl = `http://127.0.0.1:5000/document/download?source=${encodeURIComponent(source)}`;
+        
+        // Ouvrir le PDF dans un nouvel onglet
+        window.open(pdfUrl, "_blank");
     };
 
     // Fonction utilitaire pour rafraîchir les données
@@ -520,18 +508,19 @@ const GestionCollections = () => {
                     />
                 )}
                 
-                {showDeleteConfirmation && (
+                {showDeleteDocumentConfirmation && (
                     <DeleteConfirmation 
-                        onCancel={handleDeleteCancel}
-                        onConfirm={handleDeleteConfirm}
+                        onCancel={handleDocumentDeleteCancel}
+                        onConfirm={handleDocumentDeleteConfirm}
                         itemName={documentToDelete?.file_name || "ce document"}
                     />
                 )}
-                
-                {showTagFeedback && (
-                    <TagFeedback 
-                        tag={lastAddedTag} 
-                        onComplete={() => setShowTagFeedback(false)} 
+
+                {showDeleteTagConfirmation && (
+                    <DeleteConfirmation 
+                        onCancel={handleTagDeleteCancel}
+                        onConfirm={handleTagDeleteConfirm}
+                        itemName={documentToDelete?.file_name || "ce tag et tous les documents associés"}
                     />
                 )}
             </AnimatePresence>
@@ -612,12 +601,13 @@ const GestionCollections = () => {
                             <label htmlFor="tagInput" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                                 Tags (Facultatif)
                             </label>
-                            {/* Utiliser le composant AnimatedTagInput */}
-                            <AnimatedTagInput
+                            <Input
+                                type="text"
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
                                 onKeyDown={handleKeyDown}
-                                onAddTag={addTag}
+                                placeholder="Ajoutez un tag et appuyez sur Entrée"
+                                className="w-full bg-transparent outline-none text-sm text-gray-800 dark:text-white"
                             />
                         </div>                 
                     </div>
@@ -791,7 +781,7 @@ const GestionCollections = () => {
                                                         <FileText className="h-5 w-5 text-indigo-500 dark:text-indigo-500" />
                                                     </div>
                                                     <div
-                                                        onClick={() => handleDelete(doc.source, doc.collection)}
+                                                        onClick={() => handleDeleteDocumentClick(doc.source, doc.collection)}
                                                         className="p-2 rounded hover:text-red-400 dark:hover:bg-red-400/30"
                                                         title="Supprimer le document"
                                                     >
@@ -880,7 +870,7 @@ const GestionCollections = () => {
                         <div className="flex justify-between items-center mt-4">
                         <h4 className="text-md font-semibold">Documents associés à « {selectedTag} »</h4>
                         <button
-                            onClick={handleDeleteAllByTag}
+                            onClick={handleDeleteTagClick}
                             className="text-sm text-red-500 hover:underline"
                         >
                             Supprimer le tag
@@ -926,7 +916,7 @@ const GestionCollections = () => {
                                     <FileText className="h-5 w-5 text-indigo-500 dark:text-indigo-500" />
                                 </div>
                                 <div
-                                    onClick={() => handleDelete(doc.source, doc.collection)}
+                                    onClick={() => handleDeleteDocumentClick(doc.source, doc.collection)}
                                     className="p-2 rounded hover:text-red-400 dark:hover:bg-red-400/30"
                                     title="Supprimer le document"
                                 >
