@@ -64,15 +64,13 @@ const MainApp = () => {
     if(user?.role === "user"){
         menuItems.push(
             { id: "home", label: "Accueil", icon: HomeIcon },
-            { id: "rag-settings", label: "Paramètres du RAG", icon: Settings },
-            { id: "history", label: "Historique", icon: HistoryIcon },
+            { id: "rag-settings", label: "Paramètres du RAG", icon: Settings }
         );
     } else {
         menuItems.push(
             { id: "home", label: "Accueil", icon: HomeIcon },
             { id: "add-documents", label: "Ajouter des documents", icon: Upload },
-            { id: "rag-settings", label: "Paramètres du RAG", icon: Settings },
-            { id: "history", label: "Historique", icon: HistoryIcon },
+            { id: "rag-settings", label: "Paramètres du RAG", icon: Settings }
         );
     }
 
@@ -82,8 +80,6 @@ const MainApp = () => {
                 return <AddDocuments />;
             case "rag-settings":
                 return <RagSettings />;
-            case "history":
-                return <History />;
             default:
                 return <Home />;
         }
