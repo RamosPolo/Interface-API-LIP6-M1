@@ -563,7 +563,7 @@ const GestionCollections = () => {
                 <CardHeader className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-t-lg pb-4">
                     <div className="flex items-center gap-3">
                         <Upload className="h-6 w-6" />
-                        <h3 className="text-xl font-semibold">Déposer un document</h3>
+                        <h3 className="text-xl font-semibold">Déposer des documents</h3>
                     </div>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-6 p-6">
