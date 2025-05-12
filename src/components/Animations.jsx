@@ -716,75 +716,6 @@ const UploadingAnimation = ({ progress = 0, fileName }) => {
   );
 };
 
-// Animation pour le bouton d'envoi de document
-const AnimatedUploadButton = ({ onClick, disabled, isUploading, uploadMode }) => {
-  return (
-    <motion.button
-      onClick={onClick}
-      disabled={disabled}
-      className={`
-        w-full py-3 px-4 rounded-lg flex items-center justify-center gap-2 shadow-md
-        ${disabled 
-          ? 'bg-gray-300 text-gray-500 dark:bg-gray-700 dark:text-gray-400 cursor-not-allowed' 
-          : 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white hover:from-indigo-700 hover:to-indigo-800'}
-        transition-all duration-300
-      `}
-      whileHover={!disabled ? { scale: 1.02, boxShadow: "0 4px 12px rgba(79, 70, 229, 0.3)" } : {}}
-      whileTap={!disabled ? { scale: 0.98 } : {}}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ type: "spring", stiffness: 400, damping: 20 }}
-    >
-      {isUploading ? (
-        <>
-          <motion.svg 
-            className="animate-spin h-5 w-5" 
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none" 
-            viewBox="0 0 24 24"
-          >
-            <circle 
-              className="opacity-25" 
-              cx="12" 
-              cy="12" 
-              r="10" 
-              stroke="currentColor" 
-              strokeWidth="4"
-            />
-            <path 
-              className="opacity-75" 
-              fill="currentColor" 
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-            />
-          </motion.svg>
-          <span>Envoi en cours...</span>
-        </>
-      ) : (
-        <>
-          <svg 
-            className="h-5 w-5" 
-            fill="none" 
-            viewBox="0 0 24 24" 
-            stroke="currentColor"
-          >
-            <path 
-              strokeLinecap="round" 
-              strokeLinejoin="round" 
-              strokeWidth={2} 
-              d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" 
-            />
-          </svg>
-          <span>
-            {uploadMode === "zip"
-              ? "Envoyer l'archive ZIP"
-              : "Envoyer le document"}
-          </span>
-        </>
-      )}
-    </motion.button>
-  );
-};
-
 /*****************************
  * Animation de bienvenue
  *****************************/
@@ -1010,6 +941,4 @@ export {
   SuccessAnimation,
   DeleteConfirmation,
   UploadingAnimation,
-  AnimatedUploadButton,
-
 };

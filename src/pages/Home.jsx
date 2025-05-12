@@ -740,11 +740,13 @@ const MessageInput = ({ value, onChange, onSend, disabled, collections, selected
                         <Select
                             value={selectedCollection}
                             onChange={onCollectionChange}
-                            options={collections.map(collection => ({
-                                value: collection,
-                                label: collection
-                            }))}
-                            className="w-full"
+                            options={[
+                                { value: '', label: 'Sélectionner une collection' },
+                                ...collections.map((collection) => ({
+                                    value: collection,
+                                    label: collection
+                                }))
+                            ]}
                             placeholder="Sélectionner une collection"
                         />
                     </div>
@@ -838,9 +840,6 @@ const Home = () => {
                 const data = await response.json();
                 if (data.collections) {
                     setCollections(data.collections);
-                    if (data.collections.length > 0) {
-                        setSelectedCollection(data.collections[0]);
-                    }
                 }
             } catch (error) {
                 console.error("Erreur lors de la récupération des collections:", error);
