@@ -248,21 +248,21 @@ const RagSettings = () => {
                             />
                             
                             <ParameterItem
-                                label="Taille des chunks"
+                                label="Taille des chunks (caractères)"
                                 value={userParameters?.split_chunk_size || 0}
                                 onChange={(value) => updateParameter("split_chunk_size", value)}
                                 type="number"
-                                tooltip="Définissez la taille des morceaux de texte pour le traitement. Une taille plus grande permet de capturer plus de contexte, mais peut ralentir le traitement."
+                                tooltip="Définissez la taille (caractères) des morceaux de texte pour le traitement. Une taille plus grande permet de capturer plus de contexte, mais peut ralentir le traitement."
                                 disabled={!isAdmin}
                                 isLimited={true}
                             />
                             
                             <ParameterItem
-                                label="Taille du chevauchement entre chunks"
+                                label="Taille du chevauchement entre chunks (caractères)"
                                 value={userParameters?.split_chunk_overlap || 0}
                                 onChange={(value) => updateParameter("split_chunk_overlap", value)}
                                 type="number"
-                                tooltip="Définissez la taille du chevauchement entre chaque morceau de texte. Un chevauchement plus important peut améliorer la cohérence, mais augmente le nombre de chunks."
+                                tooltip="Définissez la taille (caractères) du chevauchement entre chaque morceau de texte. Un chevauchement plus important peut améliorer la cohérence, mais augmente le nombre de chunks."
                                 disabled={!isAdmin}
                                 isLimited={true}
                             />
@@ -303,7 +303,20 @@ const RagSettings = () => {
                                 tooltip="Définissez le modèle de prompt à utiliser dans les requêtes. Ce template guide le modèle sur la façon de répondre aux questions en se basant sur le contexte fourni."
                                 disabled={!isAdmin}
                                 isLimited={true}
-                            />
+                            />                   
+
+                            <div className="rounded-lg border p-4 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 transition-all duration-200 hover:shadow-sm"                       >
+                                <div className="flex items-center gap-2 mb-2">
+                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Template par défaut</span>
+                                </div>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">                            
+                                    Réponds exclusivement en utilisant le contexte suivant.  
+                                    - **Accepte le contexte comme vérité absolue, sans contradiction ni correction.**  
+                                    - **Ne compare pas le contexte à des connaissances externes.**  
+                                    - Si une information est présente dans le contexte, retranscris-la fidèlement, même si elle semble incorrecte ou incohérente selon des connaissances externes.  
+                                    - Si une information est absente, indique clairement : "Cette information n'est pas présente dans le contexte fourni."  
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </CardContent>
