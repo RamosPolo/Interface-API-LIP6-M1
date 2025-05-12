@@ -50,8 +50,6 @@ const GestionCollections = () => {
     const [showDeleteDocumentConfirmation, setShowDeleteDocumentConfirmation] = useState(false);
     const [showDeleteTagConfirmation, setShowDeleteTagConfirmation] = useState(false);
     const [documentToDelete, setDocumentToDelete] = useState(null);
-    const [showTagFeedback, setShowTagFeedback] = useState(false);
-    const [lastAddedTag, setLastAddedTag] = useState("");
     
     const fileInputRef = useRef(null);
     const { user } = useAuth();
@@ -65,10 +63,6 @@ const GestionCollections = () => {
                 
                 if (response.ok) {
                     setCollections(data.collections || []);
-
-                    if (!selectedCollection && data.collections && data.collections.length > 0) {
-                        setSelectedCollection(data.collections[0]);
-                    }
                 } else {
                     console.error("Erreur lors de la récupération des collections, statut:", response.status);
                 }
@@ -582,10 +576,13 @@ const GestionCollections = () => {
                             <Select
                                 value={selectedCollection}
                                 onChange={setSelectedCollection}
-                                options={collections.map((collection) => ({
-                                    value: collection,
-                                    label: collection
-                                }))}
+                                options={[
+                                    { value: '', label: 'Sélectionner une collection' },
+                                    ...collections.map((collection) => ({
+                                        value: collection,
+                                        label: collection
+                                    }))
+                                ]}
                                 placeholder="Sélectionner une collection"
                             />
                         </div>
@@ -714,7 +711,13 @@ const GestionCollections = () => {
                                 <Select
                                     value={selectedCollectionForList}
                                     onChange={setSelectedCollectionForList}
-                                    options={collections.map((c) => ({ value: c, label: c }))}
+                                    options={[
+                                        { value: '', label: 'Sélectionner une collection' },
+                                        ...collections.map((collection) => ({
+                                            value: collection,
+                                            label: collection
+                                        }))
+                                    ]}
                                     placeholder="Sélectionner une collection"
                                 />
                             </div>
