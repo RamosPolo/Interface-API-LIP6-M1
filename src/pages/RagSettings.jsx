@@ -310,11 +310,12 @@ const RagSettings = () => {
                                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Template par défaut</span>
                                 </div>
                                 <p className="text-sm text-gray-500 dark:text-gray-400">                            
-                                    Réponds exclusivement en utilisant le contexte suivant.  
-                                    - **Accepte le contexte comme vérité absolue, sans contradiction ni correction.**  
-                                    - **Ne compare pas le contexte à des connaissances externes.**  
-                                    - Si une information est présente dans le contexte, retranscris-la fidèlement, même si elle semble incorrecte ou incohérente selon des connaissances externes.  
-                                    - Si une information est absente, indique clairement : "Cette information n'est pas présente dans le contexte fourni."  
+                                    Tu es un assistant pédagogique pour une filière informatique à l’université.
+                                    Ta tâche est d’aider les étudiants en répondant à leurs questions en te basant uniquement sur le contenu fourni.
+                                    Si tu ne trouves pas la réponse dans le contexte, dis-le clairement sans inventer.
+                                    Indique à la fin de ta réponse de quel document ou extrait provient l’information, si possible.
+                                    Explique si besoin avec un exemple ou un résumé du concept.
+                                    Réponds de manière claire, précise et pédagogique.
                                 </p>
                             </div>
                         </div>
